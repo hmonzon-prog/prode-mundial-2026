@@ -6,6 +6,7 @@
 <title>Prode Mundial 2026</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh}
@@ -361,7 +362,7 @@ function renderApp(){
   html+=`<div class="tab-content${tab==='prode'?' activo':''}" id="tab-prode">`;
 
   if(!ADMIN_MODE&&bloqueado){
-    html+=`<div class="msg info">Predicción guardada el ${data.fecha}. No se puede modificar.</div>`;
+    html+=`<div class="msg info">Predicción guardada el ${data.fecha}. No se puede modificar. <span style="cursor:pointer;color:#d29922;text-decoration:underline;margin-left:6px" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</span></div>`;
   }
   if(!ADMIN_MODE&&!bloqueado){
     html+=`<div class="msg warn">Completá todos los resultados y guardá al final.</div>`;
@@ -413,6 +414,7 @@ function renderApp(){
     const u=bd.usuarios[EDITANDO_KEY];
     html+=`<div class="acciones">
       <button onclick="guardarEdicionUsuario()">💾 Guardar para ${u.nombre}</button>
+      <button class="btn-sec" onclick="descargarPDF('${EDITANDO_KEY}')">📄 PDF</button>
       <button class="btn-sec" onclick="cancelarEdicion()">✕ Cancelar</button>
     </div>`;
   }else if(ADMIN_MODE){
@@ -614,6 +616,47 @@ async function guardarEdicionUsuario(){
   EDITANDO_KEY=null;
   await guardarBD();
   renderApp();
+}
+
+function descargarPDF(key){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const usr=bd.usuarios[key];
+  if(!usr||!usr.resultados)return;
+
+  const M=14,x1=M,x2=105,x3=200,rowH=4.5;
+  let y=28;
+
+  function txt(s,size,color,bold){
+    size&&doc.setFontSize(size);
+    color&&doc.setTextColor(...color);
+    bold?doc.setFont(undefined,'bold'):doc.setFont(undefined,'normal');
+  }
+
+  txt("Prode Mundial 2026",18,[0,0,0],1);doc.text("Prode Mundial 2026",M,y);y+=9;
+  txt(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,10,[60,60,60],0);doc.text(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,M,y);y+=7;
+
+  for(const g of GRUPOS){
+    if(y>270){doc.addPage();y=28}
+    txt(`Grupo ${g}`,9,[40,100,200],1);doc.text(`Grupo ${g}`,M,y);y+=5.5;
+    txt("",7.5,[0,0,0],0);
+
+    const matches=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===g);
+    for(const m of matches){
+      if(y>278){doc.addPage();y=28}
+      const r=usr.resultados[m.i];
+      const score=r?`${r.gl} - ${r.gv}`:"? - ?";
+      const line=`${m.local}  vs  ${m.visit}`;
+      const scoreW=doc.getTextWidth(score);
+      doc.text(line,M,y);
+      doc.text(score,210-M-scoreW,y);
+      y+=rowH;
+    }
+    y+=1.5;
+  }
+
+  const hoy=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
+  doc.save(`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`);
 }
 
 async function recargar(){
