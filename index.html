@@ -211,6 +211,7 @@ const SESSION_KEY = "prode2026_sesion";
 let bd = null;
 let USUARIO = null;
 let ADMIN_MODE = false;
+let EDITANDO_KEY = null;
 
 // === FIREBASE OPERATIONS ===
 async function initBD(){
@@ -291,6 +292,7 @@ function doLogin(){
 function cerrarSesion(){
   USUARIO=null;
   ADMIN_MODE=false;
+  EDITANDO_KEY=null;
   sessionStorage.removeItem(SESSION_KEY);
   document.getElementById("app").innerHTML=loginHTML();
 }
@@ -298,6 +300,7 @@ function cerrarSesion(){
 function toggleAdmin(){
   if(ADMIN_MODE){
     ADMIN_MODE=false;
+    EDITANDO_KEY=null;
     renderApp();
     return;
   }
@@ -324,11 +327,18 @@ function calcularPts(pred,real){
 function renderApp(){
   if(!bd)return;
 
-  const data=bd.usuarios[USUARIO.key];
-  const bloqueado=!!data&&!!data.resultados&&data.resultados.length>0;
   const reales=bd.reales||[];
   const hayReales=reales.some(r=>r!==undefined&&r!==null);
   const tab=sessionStorage.getItem("prode_tab")||"prode";
+
+  let data, bloqueado;
+  if(ADMIN_MODE&&EDITANDO_KEY){
+    data=bd.usuarios[EDITANDO_KEY];
+    bloqueado=true;
+  }else{
+    data=bd.usuarios[USUARIO.key];
+    bloqueado=!!data&&!!data.resultados&&data.resultados.length>0;
+  }
 
   let html=`
   <header>
@@ -350,11 +360,15 @@ function renderApp(){
 
   html+=`<div class="tab-content${tab==='prode'?' activo':''}" id="tab-prode">`;
 
-  if(bloqueado&&!ADMIN_MODE){
+  if(!ADMIN_MODE&&bloqueado){
     html+=`<div class="msg info">Predicción guardada el ${data.fecha}. No se puede modificar.</div>`;
   }
-  if(!bloqueado&&!ADMIN_MODE){
+  if(!ADMIN_MODE&&!bloqueado){
     html+=`<div class="msg warn">Completá todos los resultados y guardá al final.</div>`;
+  }
+  if(ADMIN_MODE&&EDITANDO_KEY){
+    const u=bd.usuarios[EDITANDO_KEY];
+    html+=`<div class="msg warn">Editando predicción de <strong>${u.nombre} ${u.apellido}</strong></div>`;
   }
 
   for(const g of GRUPOS){
@@ -366,8 +380,15 @@ function renderApp(){
       </div>
       <div class="grupo-body" style="display:${isOpen?'block':'none'}">`;
     for(const p of pts){
-      const val=bloqueado&&!ADMIN_MODE?(data.resultados[p.idx]||{gl:"",gv:""}):{gl:"",gv:""};
       const r=reales[p.idx]||{};
+      let val;
+      if(ADMIN_MODE&&EDITANDO_KEY){
+        val=data?data.resultados[p.idx]||{gl:"",gv:""}:{gl:"",gv:""};
+      }else if(bloqueado&&!ADMIN_MODE){
+        val=data.resultados[p.idx]||{gl:"",gv:""};
+      }else{
+        val={gl:"",gv:""};
+      }
       const predUsr=data?data.resultados[p.idx]:null;
       const ptsG=calcularPts(predUsr,r);
       const editable=!bloqueado||ADMIN_MODE;
@@ -376,9 +397,9 @@ function renderApp(){
         <div class="score-input">
           ${!editable
             ?`<span class="score-display">${val.gl!==''?val.gl:'?'}-${val.gv!==''?val.gv:'?'}</span>`
-            :`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${ADMIN_MODE&&r.gl!==undefined&&r.gl!==''?r.gl:''}">
+            :`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
               <span class="sep">-</span>
-              <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${ADMIN_MODE&&r.gv!==undefined&&r.gv!==''?r.gv:''}">`
+              <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
           }
           ${ptsG!==null?`<span class="pts-badge pts-${ptsG}">${ptsG}p</span>`:''}
         </div>
@@ -388,13 +409,19 @@ function renderApp(){
     html+=`</div></div>`;
   }
 
-  if(ADMIN_MODE){
-    html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados</button></div>`;
+  if(ADMIN_MODE&&EDITANDO_KEY){
+    const u=bd.usuarios[EDITANDO_KEY];
+    html+=`<div class="acciones">
+      <button onclick="guardarEdicionUsuario()">💾 Guardar para ${u.nombre}</button>
+      <button class="btn-sec" onclick="cancelarEdicion()">✕ Cancelar</button>
+    </div>`;
+  }else if(ADMIN_MODE){
+    html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button></div>`;
   }else if(!bloqueado){
     html+=`<div class="acciones"><button onclick="guardarPrediccion()">🔒 Guardar Prediccion</button></div>`;
   }
 
-  if(bloqueado&&!ADMIN_MODE) html+=generarResumen(data.resultados,reales,hayReales);
+  if((bloqueado&&!ADMIN_MODE)||(ADMIN_MODE&&EDITANDO_KEY)) html+=generarResumen(data.resultados,reales,hayReales);
 
   html+=`</div>`;
 
@@ -545,16 +572,46 @@ function renderRanking(reales,hayReales,esAdmin){
       <td style="text-align:center;color:#d29922;font-weight:600">${f.p1}</td>
       <td style="text-align:center;color:#484f58">${p0}</td>
       <td style="text-align:center;color:#8b949e">${efect}%</td>
-      ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#f85149;font-size:.75rem;text-decoration:underline" onclick="resetearUsuario('${f.key}')">Reset</span></td>`:''}
+      ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#d29922;font-size:.75rem;text-decoration:underline" onclick="editarUsuario('${f.key}')">Editar</span></td>`:''}
     </tr>`;
   }
   html+=`</table></div>`;
   return html;
 }
 
-async function resetearUsuario(key){
-  if(!confirm(`¿Resetear predicción de ${bd.usuarios[key].nombre} ${bd.usuarios[key].apellido}? Podrá volver a cargarla.`))return;
-  bd.usuarios[key]={nombre:bd.usuarios[key].nombre,apellido:bd.usuarios[key].apellido,resultados:[]};
+function editarUsuario(key){
+  EDITANDO_KEY=key;
+  sessionStorage.setItem("prode_tab","prode");
+  renderApp();
+}
+
+function cancelarEdicion(){
+  EDITANDO_KEY=null;
+  renderApp();
+}
+
+async function guardarEdicionUsuario(){
+  const inputs=document.querySelectorAll(".inp-gl");
+  const resultados=[];
+  for(const inp of inputs){
+    const idx=parseInt(inp.dataset.idx);
+    const gv=document.querySelector(`.inp-gv[data-idx="${idx}"]`);
+    const gl=inp.value.trim();
+    const gvVal=gv.value.trim();
+    if(gl===""||gvVal===""||isNaN(gl)||isNaN(gvVal)||parseInt(gl)<0||parseInt(gvVal)<0){
+      alert("Completá todos los resultados con números (0 o más).");
+      return;
+    }
+  }
+  for(const inp of inputs){
+    const idx=parseInt(inp.dataset.idx);
+    const gv=document.querySelector(`.inp-gv[data-idx="${idx}"]`);
+    resultados[idx]={gl:parseInt(inp.value),gv:parseInt(gv.value)};
+  }
+  const u=bd.usuarios[EDITANDO_KEY];
+  if(!confirm(`Guardar predicción para ${u.nombre} ${u.apellido}?`))return;
+  bd.usuarios[EDITANDO_KEY]={nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados};
+  EDITANDO_KEY=null;
   await guardarBD();
   renderApp();
 }
