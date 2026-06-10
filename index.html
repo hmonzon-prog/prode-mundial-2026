@@ -107,6 +107,12 @@ header .btn-admin.admin-activo{border-color:#d29922;color:#d29922}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:60px 20px;color:#6b7280}
 .loading .spinner{width:32px;height:32px;border-width:3px;display:block;margin:16px auto}
+.extra-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.extra-box .eb-item{flex:1;min-width:160px}
+.extra-box label{display:block;font-size:.72rem;color:#6b7280;margin-bottom:3px;font-weight:500}
+.extra-box select,.extra-box input{width:100%;padding:8px 10px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#1a1a2e;font-size:.85rem;outline:none;transition:border-color .2s}
+.extra-box select:focus,.extra-box input:focus{border-color:#d29922}
+.extra-box .pts-extra{font-size:.7rem;color:#9ca3af;margin-left:4px}
 @media(max-width:640px){.container{padding:8px}.login-card{padding:28px 20px 24px}.login-card .trofeo-wrap .trofeo{font-size:2.8rem}.login-card h1{font-size:1.2rem}.score-input input{width:28px;font-size:.8rem}#modal-contenido{width:94%;padding:24px 16px}}
 /* === HELP MODAL === */
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#00000080;z-index:100;display:flex;align-items:center;justify-content:center}
@@ -215,6 +221,7 @@ const PARTIDOS = [
 ];
 
 const GRUPOS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+const EQUIPOS = [...new Set(PARTIDOS.flatMap(p=>[p.local,p.visit]))].sort();
 const SESSION_KEY = "prode2026_sesion";
 
 // === ESTADO GLOBAL ===
@@ -427,6 +434,37 @@ function renderApp(){
     html+=`<div class="msg warn">Editando predicción de <strong>${u.nombre} ${u.apellido}</strong></div>`;
   }
 
+  const campeonVal=ADMIN_MODE&&EDITANDO_KEY?(bd.usuarios[EDITANDO_KEY].campeon||""):(data?data.campeon||"":"");
+  const goleadorVal=ADMIN_MODE&&EDITANDO_KEY?(bd.usuarios[EDITANDO_KEY].goleador||""):(data?data.goleador||"":"");
+  const realCampeon=bd.campeon_real||"";
+  const realGoleador=bd.goleador_real||"";
+
+  html+=`<div class="extra-box">
+    <div class="eb-item">
+      <label>🏆 Campeón <span class="pts-extra">(+10 pts)</span></label>
+      <select id="inp-campeon">
+        <option value="">— Seleccionar —</option>
+        ${EQUIPOS.map(e=>`<option value="${e}"${campeonVal===e?' selected':''}>${e}</option>`).join("")}
+      </select>
+    </div>
+    <div class="eb-item">
+      <label>⚽ Goleador <span class="pts-extra">(+5 pts)</span></label>
+      <input type="text" id="inp-goleador" placeholder="Ej: Lionel Messi" value="${ADMIN_MODE&&EDITANDO_KEY?goleadorVal:goleadorVal}" ${ADMIN_MODE&&!EDITANDO_KEY?'':'autocomplete="off"'}>
+    </div>
+    ${ADMIN_MODE&&!EDITANDO_KEY?`
+    <div class="eb-item">
+      <label>🏆 Campeón real</label>
+      <select id="inp-campeon-real">
+        <option value="">— Sin definir —</option>
+        ${EQUIPOS.map(e=>`<option value="${e}"${realCampeon===e?' selected':''}>${e}</option>`).join("")}
+      </select>
+    </div>
+    <div class="eb-item">
+      <label>⚽ Goleador real</label>
+      <input type="text" id="inp-goleador-real" placeholder="Ej: Lionel Messi" value="${realGoleador}">
+    </div>`:''}
+  </div>`;
+
   for(const g of GRUPOS){
     const pts=PARTIDOS.map((p,i)=>({...p,idx:i})).filter(p=>p.grupo===g);
     const isOpen=sessionStorage.getItem("grupo_"+g)!=="closed";
@@ -528,9 +566,11 @@ async function guardarPrediccion(){
 
   if(!confirm("¿Guardar predicción? Una vez guardada no se puede modificar."))return;
 
+  const campeon=document.getElementById("inp-campeon").value;
+  const goleador=document.getElementById("inp-goleador").value.trim();
   bd.usuarios[USUARIO.key]={
     nombre:USUARIO.nombre,apellido:USUARIO.apellido,
-    fecha:new Date().toLocaleString("es-AR"),resultados
+    fecha:new Date().toLocaleString("es-AR"),resultados,campeon,goleador
   };
   await guardarBD();
   renderApp();
@@ -555,7 +595,11 @@ async function guardarResultadosAdmin(){
     }
   }
 
+  const campeonReal=document.getElementById("inp-campeon-real");
+  const goleadorReal=document.getElementById("inp-goleador-real");
   bd.reales=reales;
+  bd.campeon_real=campeonReal?campeonReal.value:"";
+  bd.goleador_real=goleadorReal?goleadorReal.value.trim():"";
   await guardarBD();
   renderApp();
 }
@@ -618,15 +662,20 @@ function renderRanking(reales,hayReales,esAdmin){
       if(p===3)p3++;else if(p===1)p1++;
       if(p)pts+=p;
     });
-    return {key:k,nombre:usr.nombre,apellido:usr.apellido,pts,p3,p1,total:usr.resultados.length};
+    let bonus=0;
+    if(bd.campeon_real&&usr.campeon===bd.campeon_real)bonus+=10;
+    if(bd.goleador_real&&usr.goleador&&usr.goleador.toLowerCase()===bd.goleador_real.toLowerCase())bonus+=5;
+    pts+=bonus;
+    return {key:k,nombre:usr.nombre,apellido:usr.apellido,pts,p3,p1,bonus,total:usr.resultados.length};
   }).filter(f=>f!==null);
 
-  filas.sort((a,b)=>b.pts-a.pts);
+  filas.sort((a,b)=>b.pts-a.pts || b.p3-a.p3 || b.p1-a.p1);
 
   if(filas.length===0) return `<div class="msg warn">Todavía no hay participantes.</div>`;
 
+  const hayBonus=bd.campeon_real||bd.goleador_real;
   let html=`<div class="ranking"><table>
-    <tr><th>#</th><th>Nombre</th><th style="text-align:center">Pts</th><th style="text-align:center">3</th><th style="text-align:center">1</th><th style="text-align:center">0</th><th style="text-align:center">Efectividad</th>${esAdmin?'<th style="text-align:center">Acción</th>':''}</tr>`;
+    <tr><th>#</th><th>Nombre</th><th style="text-align:center">Pts</th><th style="text-align:center">3</th><th style="text-align:center">1</th><th style="text-align:center">0</th><th style="text-align:center">Efectividad</th>${hayBonus?'<th style="text-align:center">Bonus</th>':''}${esAdmin?'<th style="text-align:center">Acción</th>':''}</tr>`;
   for(let i=0;i<filas.length;i++){
     const f=filas[i];
     const p0=f.total-f.p3-f.p1;
@@ -640,10 +689,12 @@ function renderRanking(reales,hayReales,esAdmin){
       <td style="text-align:center;color:#d29922;font-weight:600">${f.p1}</td>
       <td style="text-align:center;color:#9ca3af">${p0}</td>
       <td style="text-align:center;color:#6b7280">${efect}%</td>
+      ${hayBonus?`<td style="text-align:center;color:#d29922;font-weight:600;font-size:.8rem">${f.bonus>0?'+'+f.bonus:'-'}</td>`:''}
       ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#d29922;font-size:.75rem;text-decoration:underline" onclick="editarUsuario('${f.key}')">Editar</span></td>`:''}
     </tr>`;
   }
   html+=`</table></div>`;
+  html+=`<div class="acciones" style="margin-top:6px"><button class="btn-sec" onclick="compartirRanking()">📸 Compartir ranking</button></div>`;
   return html;
 }
 
@@ -677,8 +728,10 @@ async function guardarEdicionUsuario(){
     resultados[idx]={gl:parseInt(inp.value),gv:parseInt(gv.value)};
   }
   const u=bd.usuarios[EDITANDO_KEY];
+  const campeon=document.getElementById("inp-campeon").value;
+  const goleador=document.getElementById("inp-goleador").value.trim();
   if(!confirm(`Guardar predicción para ${u.nombre} ${u.apellido}?`))return;
-  bd.usuarios[EDITANDO_KEY]={nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados};
+  bd.usuarios[EDITANDO_KEY]={nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados,campeon,goleador};
   EDITANDO_KEY=null;
   await guardarBD();
   renderApp();
@@ -723,6 +776,70 @@ function descargarPDF(key){
 
   const hoy=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
   doc.save(`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`);
+}
+
+function compartirRanking(){
+  const entries=Object.entries(bd.usuarios).filter(([k])=>k!=="admin_admin");
+  const reales=bd.reales||[];
+  const hayBonus=bd.campeon_real||bd.goleador_real;
+  const filas=entries.map(([k,usr])=>{
+    if(!usr.resultados||usr.resultados.length===0)return null;
+    let pts=0,p3=0,p1=0;
+    usr.resultados.forEach((r,i)=>{
+      const p=calcularPts(r,reales[i]);
+      if(p===3)p3++;else if(p===1)p1++;
+      if(p)pts+=p;
+    });
+    let bonus=0;
+    if(bd.campeon_real&&usr.campeon===bd.campeon_real)bonus+=10;
+    if(bd.goleador_real&&usr.goleador&&usr.goleador.toLowerCase()===bd.goleador_real.toLowerCase())bonus+=5;
+    pts+=bonus;
+    const maxP=usr.resultados.length*3;
+    const efect=maxP>0?((pts/maxP)*100).toFixed(1):"0.0";
+    return {nombre:usr.nombre+" "+usr.apellido,pts,p3,p1,p0:usr.resultados.length-p3-p1,efect};
+  }).filter(f=>f!==null);
+  filas.sort((a,b)=>b.pts-a.pts || b.p3-a.p3);
+
+  const c=document.createElement("canvas");
+  c.width=520;c.height=90+filas.length*32;
+  const ctx=c.getContext("2d");
+  const W=c.width;
+
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,c.height);
+  ctx.fillStyle="#1a1a2e";ctx.font="bold 18px -apple-system,sans-serif";ctx.textAlign="center";
+  ctx.fillText("🏆 Prode Mundial 2026 — Ranking",260,30);
+  ctx.fillStyle="#9ca3af";ctx.font="11px -apple-system,sans-serif";
+  ctx.fillText(new Date().toLocaleDateString("es-AR"),260,46);
+
+  const cols=[{x:16,w:30,align:"center"},{x:48,w:120,align:"left"},{x:180,w:50,align:"center"},{x:240,w:35,align:"center"},{x:285,w:35,align:"center"},{x:325,w:35,align:"center"},{x:370,w:65,align:"center"}];
+  if(hayBonus)cols.push({x:440,w:40,align:"center"});
+  const headers=["#","Nombre","Pts","3p","1p","0p","Efec."];
+  if(hayBonus)headers.push("Bonus");
+
+  ctx.fillStyle="#f3f4f6";ctx.fillRect(10,56,W-20,22);
+  ctx.fillStyle="#6b7280";ctx.font="bold 10px -apple-system,sans-serif";
+  headers.forEach((h,i)=>{ctx.textAlign=cols[i].align;const cx=cols[i].align==="center"?cols[i].x+cols[i].w/2:cols[i].x;ctx.fillText(h,cx,71)});
+
+  const rowH=28;
+  for(let i=0;i<filas.length;i++){
+    const f=filas[i];
+    const y=88+i*rowH;
+    if(i%2===1){ctx.fillStyle="#f9fafb";ctx.fillRect(10,y-6,W-20,rowH);ctx.fillStyle="#374151"}else{ctx.fillStyle="#374151"}
+    const vals=[i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1,f.nombre,f.pts,f.p3,f.p1,f.p0,f.efect+"%"];
+    if(hayBonus)vals.push(f.bonus>0?"+"+f.bonus:"-");
+    ctx.font="12px -apple-system,sans-serif";
+    vals.forEach((v,j)=>{
+      ctx.textAlign=cols[j].align;
+      const cx=cols[j].align==="center"?cols[j].x+cols[j].w/2:cols[j].x;
+      if(j===2)ctx.fillStyle="#2563eb";else ctx.fillStyle="#374151";
+      ctx.fillText(v+"",cx,y+8);
+    });
+  }
+
+  const link=document.createElement("a");
+  link.download=`ranking-prode-${new Date().toISOString().slice(0,10)}.png`;
+  link.href=c.toDataURL("image/png");
+  link.click();
 }
 
 async function recargar(){
