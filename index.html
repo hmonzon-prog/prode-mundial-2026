@@ -10,14 +10,26 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh}
 .container{max-width:880px;margin:0 auto;padding:16px}
-#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh}
-#login h1{font-size:2rem;margin-bottom:6px;color:#58a6ff}
-#login p{color:#8b949e;margin-bottom:20px}
-#login input{width:280px;padding:11px 14px;margin:5px 0;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-size:1rem;outline:none}
-#login input:focus{border-color:#58a6ff}
-#login button{width:280px;padding:11px;margin-top:10px;background:#238636;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer}
-#login button:hover{background:#2ea043}
-.error{color:#f85149;font-size:.9rem;margin-top:6px}
+
+/* === LANDING PAGE === */
+#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden}
+#login::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,#1f6feb08 0%,transparent 50%),radial-gradient(circle at 70% 60%,#23863608 0%,transparent 50%);animation:loginBg 20s ease-in-out infinite alternate}
+@keyframes loginBg{0%{transform:translate(0,0)}100%{transform:translate(-5%,-5%)}}
+.login-card{position:relative;background:#161b22e0;backdrop-filter:blur(20px);border:1px solid #30363d;border-radius:20px;padding:40px 36px 32px;width:360px;max-width:94%;box-shadow:0 20px 60px #00000060;text-align:center}
+.login-card .logo{font-size:3.2rem;margin-bottom:4px;display:block}
+.login-card h1{font-size:1.5rem;color:#f0e6d0;margin-bottom:2px;letter-spacing:-.5px}
+.login-card .sub{color:#8b949e;font-size:.85rem;margin-bottom:20px}
+.login-card .grupos-vis{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+.login-card .grupos-vis span{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#58a6ff;border:1px solid #30363d;border-radius:6px;background:#0d111780}
+.login-card input{width:100%;padding:11px 14px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:10px;color:#e6edf3;font-size:.95rem;outline:none;transition:border-color .2s}
+.login-card input:focus{border-color:#58a6ff}
+.login-card button{width:100%;padding:11px;margin-top:8px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.login-card button:hover{transform:translateY(-1px);box-shadow:0 4px 16px #23863640}
+.login-card button:active{transform:translateY(0)}
+.login-card .admin-link{display:inline-block;margin-top:14px;font-size:.72rem;color:#484f58;cursor:pointer;text-decoration:none;border-bottom:1px dashed #484f58;transition:color .2s}
+.login-card .admin-link:hover{color:#8b949e}
+.login-card .error{color:#f85149;font-size:.82rem;margin-top:8px;min-height:20px}
+.login-card .footer{font-size:.65rem;color:#484f58;margin-top:16px;border-top:1px solid #21262d;padding-top:12px}
 header{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #30363d;margin-bottom:14px;flex-wrap:wrap;gap:6px}
 header .hl{display:flex;align-items:center;gap:8px}
 header .hl h2{font-size:1.1rem;color:#58a6ff}
@@ -207,14 +219,17 @@ async function guardarBD(){
 function loginHTML(){
   return `
   <div id="login">
-    <h1>⚽ Prode Mundial 2026</h1>
-    <p>Ingresá tus datos para empezar</p>
-    <input type="text" id="nombre" placeholder="Nombre" autocomplete="off">
-    <input type="text" id="apellido" placeholder="Apellido" autocomplete="off">
-    <button onclick="doLogin()">Ingresar</button>
-    <div class="error" id="loginError"></div>
-    <div style="margin-top:16px;font-size:.72rem;color:#484f58">
-      <span style="cursor:pointer;text-decoration:underline" onclick="mostrarAdminLogin()">🔑 Ingreso admin</span>
+    <div class="login-card">
+      <span class="logo">🏆</span>
+      <h1>Prode Mundial 2026</h1>
+      <p class="sub">Ingresá tus datos para participar</p>
+      <div class="grupos-vis">${"ABCDEFGHIJKL".split("").map(l=>`<span>${l}</span>`).join("")}</div>
+      <input type="text" id="nombre" placeholder="Nombre" autocomplete="off">
+      <input type="text" id="apellido" placeholder="Apellido" autocomplete="off">
+      <button onclick="doLogin()">Ingresar</button>
+      <div class="error" id="loginError"></div>
+      <span class="admin-link" onclick="mostrarAdminLogin()">🔑 Ingreso admin</span>
+      <div class="footer">12 grupos · 72 partidos</div>
     </div>
   </div>`;
 }
@@ -293,7 +308,7 @@ function renderApp(){
   let html=`
   <header>
     <div class="hl">
-      <h2>⚽ Prode Mundial 2026</h2>
+      <h2>🏆 Prode Mundial 2026</h2>
       <button class="btn-admin${ADMIN_MODE?' admin-activo':''}" onclick="toggleAdmin()">🎯 ${ADMIN_MODE?'Admin ON':'Admin'}</button>
       <button onclick="recargar()" title="Recargar datos">🔄</button>
     </div>
