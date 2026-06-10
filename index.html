@@ -317,12 +317,13 @@ function mostrarAyuda(){
     <h3>📖 Cómo funciona el Prode</h3>
 
     <h4>🎯 Objetivo</h4>
-    <p>Pronosticar el resultado de los 72 partidos de la fase de grupos del Mundial 2026 y sumar la mayor cantidad de puntos.</p>
+    <p>Pronosticar los 72 partidos de grupos + Campeón + Goleador del Mundial 2026 y sumar la mayor cantidad de puntos.</p>
 
     <h4>📝 Cómo participar</h4>
     <ul>
-      <li>Ingresá tu <strong>Nombre</strong> y <strong>Apellido</strong> en la pantalla de inicio.</li>
-      <li>Completá todos los resultados de los 12 grupos (A a L).</li>
+      <li>Ingresá <strong>Nombre</strong> y <strong>Apellido</strong> en la pantalla de inicio.</li>
+      <li>Elegí <strong>🏆 Campeón</strong> y <strong>⚽ Goleador</strong> arriba de los grupos.</li>
+      <li>Completá los resultados de los 12 grupos separados por <strong>Fecha 1, 2 y 3</strong>.</li>
       <li>Hacé click en <strong>"🔒 Guardar Predicción"</strong>.</li>
       <li>Una vez guardada <strong>no se puede modificar</strong>. Si necesitás cambios, hablá con el admin.</li>
     </ul>
@@ -330,18 +331,26 @@ function mostrarAyuda(){
     <h4>🔢 Sistema de puntuación</h4>
     <ul>
       <li><span class="pts-badge pts-3">3p</span> — Resultado exacto (ej: 2-1 y terminó 2-1)</li>
-      <li><span class="pts-badge pts-1">1p</span> — Ganador o empate correcto (ej: pronosticaste 3-1 y ganó el mismo equipo 1-0)</li>
-      <li><span class="pts-badge pts-0">0p</span> — Equivocaste el resultado</li>
+      <li><span class="pts-badge pts-1">1p</span> — Ganador o empate correcto</li>
+      <li><span class="pts-badge pts-0">0p</span> — Resultado incorrecto</li>
+      <li><strong>+10 pts</strong> — Si acertás el Campeón</li>
+      <li><strong>+5 pts</strong> — Si acertás el Goleador</li>
     </ul>
 
+    <h4>📊 Desempate</h4>
+    <p>Si hay empate en puntos, gana quien tenga más resultados exactos (3p).</p>
+
+    <h4>📄 PDF</h4>
+    <p>Después de guardar, tocá <strong>"📄 PDF"</strong> para descargar tus pronósticos. El admin también puede descargar el PDF de cualquier usuario.</p>
+
     <h4>🏆 Ranking</h4>
-    <p>Se activa cuando el admin carga los resultados reales. Muestra a todos los participantes ordenados por puntos, con medallas 🥇🥈🥉 y efectividad.</p>
+    <p>Se activa cuando el admin carga los resultados reales. Muestra participantes ordenados por puntos, con medallas 🥇🥈🥉 y efectividad. También podés <strong>"📸 Compartir ranking"</strong> como imagen.</p>
 
     <h4>🔄 Recargar</h4>
-    <p>Usá el botón <strong>🔄</strong> para ver los datos más recientes (resultados reales, nuevos participantes, etc.).</p>
+    <p>Usá el botón <strong>🔄</strong> para ver los datos más recientes.</p>
 
     <h4>🔑 Admin</h4>
-    <p>El admin puede cargar los resultados reales de los partidos y editar cualquier predicción si un usuario lo solicita.</p>
+    <p>Carga resultados reales de los partidos, edita predicciones si un usuario lo solicita, y define el Campeón/Goleador real.</p>
   </div>`;
   document.body.appendChild(overlay);
 }
