@@ -399,7 +399,7 @@ function renderApp(){
   html+=`</div>`;
 
   html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking">`;
-  html+=renderRanking(reales,hayReales);
+  html+=renderRanking(reales,hayReales,ADMIN_MODE);
   html+=`</div>`;
 
   document.getElementById("app").innerHTML=html;
@@ -509,31 +509,29 @@ function generarResumen(resultados,reales,hayReales){
   return html;
 }
 
-function renderRanking(reales,hayReales){
+function renderRanking(reales,hayReales,esAdmin){
   if(!hayReales){
     return `<div class="msg info">Los resultados reales aún no fueron cargados. Ingresá como 🎯 Admin para cargarlos.</div>`;
   }
 
-  const filas=Object.entries(bd.usuarios)
-    .filter(([k])=>k!=="admin_admin")
-    .map(([,usr])=>{
-      if(!usr.resultados||usr.resultados.length===0)return null;
-      let pts=0,p3=0,p1=0;
-      usr.resultados.forEach((r,i)=>{
-        const p=calcularPts(r,reales[i]);
-        if(p===3)p3++;else if(p===1)p1++;
-        if(p)pts+=p;
-      });
-      return {nombre:usr.nombre,apellido:usr.apellido,pts,p3,p1,total:usr.resultados.length};
-    })
-    .filter(f=>f!==null);
+  const entries=Object.entries(bd.usuarios).filter(([k])=>k!=="admin_admin");
+  const filas=entries.map(([k,usr])=>{
+    if(!usr.resultados||usr.resultados.length===0)return null;
+    let pts=0,p3=0,p1=0;
+    usr.resultados.forEach((r,i)=>{
+      const p=calcularPts(r,reales[i]);
+      if(p===3)p3++;else if(p===1)p1++;
+      if(p)pts+=p;
+    });
+    return {key:k,nombre:usr.nombre,apellido:usr.apellido,pts,p3,p1,total:usr.resultados.length};
+  }).filter(f=>f!==null);
 
   filas.sort((a,b)=>b.pts-a.pts);
 
   if(filas.length===0) return `<div class="msg warn">Todavía no hay participantes.</div>`;
 
   let html=`<div class="ranking"><table>
-    <tr><th>#</th><th>Nombre</th><th style="text-align:center">Pts</th><th style="text-align:center">3</th><th style="text-align:center">1</th><th style="text-align:center">0</th><th style="text-align:center">Efectividad</th></tr>`;
+    <tr><th>#</th><th>Nombre</th><th style="text-align:center">Pts</th><th style="text-align:center">3</th><th style="text-align:center">1</th><th style="text-align:center">0</th><th style="text-align:center">Efectividad</th>${esAdmin?'<th style="text-align:center">Acción</th>':''}</tr>`;
   for(let i=0;i<filas.length;i++){
     const f=filas[i];
     const p0=f.total-f.p3-f.p1;
@@ -547,10 +545,18 @@ function renderRanking(reales,hayReales){
       <td style="text-align:center;color:#d29922;font-weight:600">${f.p1}</td>
       <td style="text-align:center;color:#484f58">${p0}</td>
       <td style="text-align:center;color:#8b949e">${efect}%</td>
+      ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#f85149;font-size:.75rem;text-decoration:underline" onclick="resetearUsuario('${f.key}')">Reset</span></td>`:''}
     </tr>`;
   }
   html+=`</table></div>`;
   return html;
+}
+
+async function resetearUsuario(key){
+  if(!confirm(`¿Resetear predicción de ${bd.usuarios[key].nombre} ${bd.usuarios[key].apellido}? Podrá volver a cargarla.`))return;
+  bd.usuarios[key]={nombre:bd.usuarios[key].nombre,apellido:bd.usuarios[key].apellido,resultados:[]};
+  await guardarBD();
+  renderApp();
 }
 
 async function recargar(){
