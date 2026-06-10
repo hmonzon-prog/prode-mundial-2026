@@ -108,7 +108,17 @@ header .btn-admin.admin-activo{border-color:#d29922;color:#d29922}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:60px 20px;color:#8b949e}
 .loading .spinner{width:32px;height:32px;border-width:3px;display:block;margin:16px auto}
-@media(max-width:640px){.container{padding:8px}.login-card{padding:32px 20px 24px;width:96%}.login-card .trofeo-wrap .trofeo{font-size:3rem}.login-card h1{font-size:1.3rem}.score-input input{width:28px;font-size:.8rem}}
+@media(max-width:640px){.container{padding:8px}.login-card{padding:32px 20px 24px;width:96%}.login-card .trofeo-wrap .trofeo{font-size:3rem}.login-card h1{font-size:1.3rem}.score-input input{width:28px;font-size:.8rem}#modal-contenido{width:94%;padding:24px 16px}}
+/* === HELP MODAL === */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#00000080;z-index:100;display:flex;align-items:center;justify-content:center}
+#modal-contenido{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:32px 28px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;position:relative}
+#modal-contenido h3{font-size:1.1rem;color:#f0e6d0;margin-bottom:14px;border-bottom:1px solid #21262d;padding-bottom:8px}
+#modal-contenido h4{font-size:.9rem;color:#d29922;margin:12px 0 4px}
+#modal-contenido p,#modal-contenido li{font-size:.82rem;color:#8b949e;line-height:1.5;margin-bottom:4px}
+#modal-contenido ul{padding-left:18px;margin:4px 0 8px}
+#modal-contenido li{margin-bottom:2px}
+#modal-contenido .cerrar-modal{position:absolute;top:12px;right:14px;background:0;border:none;color:#8b949e;font-size:1.2rem;cursor:pointer}
+#modal-contenido .cerrar-modal:hover{color:#e6edf3}
 </style>
 </head>
 <body>
@@ -290,6 +300,51 @@ function doLogin(){
   renderApp();
 }
 
+function mostrarAyuda(){
+  const overlay=document.createElement("div");
+  overlay.className="modal-overlay";
+  overlay.id="modal-ayuda";
+  overlay.onclick=e=>{if(e.target===overlay)cerrarAyuda()};
+  overlay.innerHTML=`
+  <div id="modal-contenido">
+    <button class="cerrar-modal" onclick="cerrarAyuda()">✕</button>
+    <h3>📖 Cómo funciona el Prode</h3>
+
+    <h4>🎯 Objetivo</h4>
+    <p>Pronosticar el resultado de los 72 partidos de la fase de grupos del Mundial 2026 y sumar la mayor cantidad de puntos.</p>
+
+    <h4>📝 Cómo participar</h4>
+    <ul>
+      <li>Ingresá tu <strong>Nombre</strong> y <strong>Apellido</strong> en la pantalla de inicio.</li>
+      <li>Completá todos los resultados de los 12 grupos (A a L).</li>
+      <li>Hacé click en <strong>"🔒 Guardar Predicción"</strong>.</li>
+      <li>Una vez guardada <strong>no se puede modificar</strong>. Si necesitás cambios, hablá con el admin.</li>
+    </ul>
+
+    <h4>🔢 Sistema de puntuación</h4>
+    <ul>
+      <li><span class="pts-badge pts-3">3p</span> — Resultado exacto (ej: 2-1 y terminó 2-1)</li>
+      <li><span class="pts-badge pts-1">1p</span> — Ganador o empate correcto (ej: pronosticaste 3-1 y ganó el mismo equipo 1-0)</li>
+      <li><span class="pts-badge pts-0">0p</span> — Equivocaste el resultado</li>
+    </ul>
+
+    <h4>🏆 Ranking</h4>
+    <p>Se activa cuando el admin carga los resultados reales. Muestra a todos los participantes ordenados por puntos, con medallas 🥇🥈🥉 y efectividad.</p>
+
+    <h4>🔄 Recargar</h4>
+    <p>Usá el botón <strong>🔄</strong> para ver los datos más recientes (resultados reales, nuevos participantes, etc.).</p>
+
+    <h4>🔑 Admin</h4>
+    <p>El admin puede cargar los resultados reales de los partidos y editar cualquier predicción si un usuario lo solicita.</p>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function cerrarAyuda(){
+  const el=document.getElementById("modal-ayuda");
+  if(el)el.remove();
+}
+
 function cerrarSesion(){
   USUARIO=null;
   ADMIN_MODE=false;
@@ -347,6 +402,7 @@ function renderApp(){
       <h2>🏆 Prode Mundial 2026</h2>
       <button class="btn-admin${ADMIN_MODE?' admin-activo':''}" onclick="toggleAdmin()">🎯 ${ADMIN_MODE?'Admin ON':'Admin'}</button>
       <button onclick="recargar()" title="Recargar datos">🔄</button>
+      <button onclick="mostrarAyuda()" title="Cómo funciona">❓</button>
     </div>
     <div class="hr">
       <span>${USUARIO.nombre} ${USUARIO.apellido}</span>
