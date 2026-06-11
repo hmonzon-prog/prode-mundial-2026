@@ -537,6 +537,8 @@ function renderApp(){
     </div>`;
   }else if(ADMIN_MODE){
     html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button></div>`;
+  }else if(bloqueado){
+    html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
   }else if(!bloqueado){
     html+=`<div class="acciones"><button onclick="guardarPrediccion()">🔒 Guardar Prediccion</button></div>`;
   }
