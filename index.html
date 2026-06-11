@@ -6,6 +6,7 @@
 <title>Prode Mundial 2026</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -305,10 +306,44 @@ function loginHTML(){
   </div>`;
 }
 
+let AUTH_USER = null;
+
 function mostrarAdminLogin(){
-  const pass=prompt("Contraseña de administrador:");
-  if(pass===null)return;
-  if(pass==="admin123"){
+  const overlay=document.createElement("div");
+  overlay.className="modal-overlay";
+  overlay.id="modal-admin-auth";
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.innerHTML=`
+  <div id="modal-contenido" style="max-width:360px">
+    <button class="cerrar-modal" onclick="this.closest('.modal-overlay').remove()">✕</button>
+    <h3 style="margin:0 0 12px;font-size:1.1rem">🔑 Ingreso Admin</h3>
+    <div id="admin-auth-msg" style="font-size:.82rem;color:#ef4444;min-height:20px;margin-bottom:6px"></div>
+    <input type="email" id="admin-email" placeholder="Email" style="width:100%;padding:10px 12px;margin:3px 0;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
+    <input type="password" id="admin-pass" placeholder="Contraseña" style="width:100%;padding:10px 12px;margin:3px 0;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
+    <button onclick="loginAdmin()" style="width:100%;padding:10px;margin-top:6px;background:#238636;color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer">Ingresar</button>
+    <div id="admin-reg-area" style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;display:none">
+      <p style="font-size:.82rem;color:#6b7280;margin:0 0 6px">Primer acceso — creá el usuario administrador:</p>
+      <button onclick="registrarAdmin()" style="width:100%;padding:8px;background:#d29922;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer">Registrar Admin</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById("admin-email").focus();
+  if(bd&&!bd.admin_email)document.getElementById("admin-reg-area").style.display="block";
+}
+
+async function loginAdmin(){
+  const email=document.getElementById("admin-email").value.trim();
+  const pass=document.getElementById("admin-pass").value;
+  const msg=document.getElementById("admin-auth-msg");
+  if(!email||!pass){msg.textContent="Completá email y contraseña";return}
+  try{
+    const cred=await firebase.auth().signInWithEmailAndPassword(email,pass);
+    if(bd&&bd.admin_email&&cred.user.email!==bd.admin_email){
+      await firebase.auth().signOut();
+      msg.textContent="Este email no es el administrador.";
+      return;
+    }
+    AUTH_USER=cred.user;
     ADMIN_MODE=true;
     USUARIO={nombre:"Admin",apellido:"Admin",key:"admin_admin"};
     sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
@@ -316,9 +351,33 @@ function mostrarAdminLogin(){
       bd.usuarios["admin_admin"]={nombre:"Admin",apellido:"Admin",fecha:"-",resultados:[]};
       guardarBD();
     }
+    document.getElementById("modal-admin-auth").remove();
     renderApp();
-  }else{
-    alert("Contraseña incorrecta.");
+  }catch(e){
+    msg.textContent=e.message;
+  }
+}
+
+async function registrarAdmin(){
+  const email=document.getElementById("admin-email").value.trim();
+  const pass=document.getElementById("admin-pass").value;
+  const msg=document.getElementById("admin-auth-msg");
+  if(!email||!pass){msg.textContent="Completá email y contraseña";return}
+  if(pass.length<6){msg.textContent="La contraseña debe tener al menos 6 caracteres";return}
+  try{
+    const cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
+    bd.admin_email=email;
+    await guardarBD();
+    AUTH_USER=cred.user;
+    ADMIN_MODE=true;
+    USUARIO={nombre:"Admin",apellido:"Admin",key:"admin_admin"};
+    sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
+    bd.usuarios["admin_admin"]={nombre:"Admin",apellido:"Admin",fecha:"-",resultados:[]};
+    await guardarBD();
+    document.getElementById("modal-admin-auth").remove();
+    renderApp();
+  }catch(e){
+    msg.textContent=e.message;
   }
 }
 
@@ -418,6 +477,7 @@ function cerrarSesion(){
   USUARIO=null;
   ADMIN_MODE=false;
   EDITANDO_KEY=null;
+  if(AUTH_USER){firebase.auth().signOut();AUTH_USER=null}
   sessionStorage.removeItem(SESSION_KEY);
   document.getElementById("app").innerHTML=loginHTML();
 }
@@ -426,17 +486,11 @@ function toggleAdmin(){
   if(ADMIN_MODE){
     ADMIN_MODE=false;
     EDITANDO_KEY=null;
+    if(AUTH_USER){firebase.auth().signOut();AUTH_USER=null}
     renderApp();
     return;
   }
-  const pass=prompt("Contraseña de administrador:");
-  if(pass===null)return;
-  if(pass==="admin123"){
-    ADMIN_MODE=true;
-    renderApp();
-  }else{
-    alert("Contraseña incorrecta.");
-  }
+  mostrarAdminLogin();
 }
 
 // === LOGICA ===
@@ -1343,6 +1397,18 @@ async function init(){
   }else{
     document.getElementById("app").innerHTML=loginHTML();
   }
+  firebase.auth().onAuthStateChanged(user=>{
+    if(!user&&ADMIN_MODE){
+      ADMIN_MODE=false;
+      AUTH_USER=null;
+      EDITANDO_KEY=null;
+      USUARIO=null;
+      sessionStorage.removeItem(SESSION_KEY);
+      document.getElementById("app").innerHTML=loginHTML();
+    }else if(user&&!ADMIN_MODE){
+      AUTH_USER=user;
+    }
+  });
 }
 
 init();
