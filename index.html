@@ -428,7 +428,7 @@ function calcularPts(pred,real){
 function calcularTabla(grupo,resultados){
   const pts=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===grupo);
   const eq={};
-  for(const p of pts)eq[p.local]=eq[p.visit]={pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};
+  for(const p of pts){if(!eq[p.local])eq[p.local]={pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};if(!eq[p.visit])eq[p.visit]={pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};}
   for(const p of pts){
     const r=resultados[p.i];if(!r)continue;
     const L=eq[p.local],V=eq[p.visit];
@@ -794,7 +794,7 @@ function generarResumen(resultados,reales,hayReales){
       const ko=koBracket[i];
       const real=reales?reales[idx]:null;
       const pts=calcularPts(r,real);
-      if(ko.fase!==lastFase){lastFase=ko.fase;const labels={32vos:"📌 32vos",8vos:"🔵 8vos",4tos:"🟣 4tos",Semi:"🟠 Semi",Final:"🏆 Final"};koHtml+=`<tr><td colspan="${hayReales?7:5}" style="padding:5px 5px 2px;color:#2563eb;font-weight:600;font-size:.8rem">${labels[ko.fase]||ko.fase}</td></tr>`}
+      if(ko.fase!==lastFase){lastFase=ko.fase;const L={"32vos":"📌 32vos","8vos":"🔵 8vos","4tos":"🟣 4tos",Semi:"🟠 Semi",Final:"🏆 Final"};koHtml+=`<tr><td colspan="${hayReales?7:5}" style="padding:5px 5px 2px;color:#2563eb;font-weight:600;font-size:.8rem">${L[ko.fase]||ko.fase}</td></tr>`}
       koHtml+=`<tr>
         <td style="padding:2px 5px;border-bottom:1px solid #f3f4f6;color:#9ca3af;font-size:.7rem">${ko.fase}</td>
         <td style="padding:2px 5px;border-bottom:1px solid #f3f4f6">${ko.localEquipo}</td>
