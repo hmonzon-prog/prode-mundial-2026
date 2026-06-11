@@ -456,6 +456,7 @@ function renderApp(){
   const realGoleador=bd.goleador_real||"";
 
   html+=`<div class="extra-box">
+    ${ADMIN_MODE&&!EDITANDO_KEY?'':`
     <div class="eb-item">
       <label>🏆 Campeón <span class="pts-extra">(+10 pts)</span></label>
       <select id="inp-campeon">
@@ -466,7 +467,7 @@ function renderApp(){
     <div class="eb-item">
       <label>⚽ Goleador <span class="pts-extra">(+5 pts)</span></label>
       <input type="text" id="inp-goleador" placeholder="Ej: Lionel Messi" value="${ADMIN_MODE&&EDITANDO_KEY?goleadorVal:goleadorVal}" ${ADMIN_MODE&&!EDITANDO_KEY?'':'autocomplete="off"'}>
-    </div>
+    </div>`}
     ${ADMIN_MODE&&!EDITANDO_KEY?`
     <div class="eb-item">
       <label>🏆 Campeón real</label>
