@@ -840,7 +840,14 @@ function generarPDF(key){
     }
 
     const hoy=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
-    doc.save(`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`);
+    const blob=doc.output("blob");
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},1000);
   }catch(e){
     console.error(e);
     imprimirPrediccion(key);
