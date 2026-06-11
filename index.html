@@ -594,6 +594,7 @@ async function guardarPrediccion(){
   };
   await guardarBD();
   renderApp();
+  setTimeout(()=>descargarPDF(USUARIO.key),500);
 }
 
 async function guardarResultadosAdmin(){
@@ -767,44 +768,61 @@ async function guardarEdicionUsuario(){
 }
 
 function descargarPDF(key){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:"mm",format:"a4"});
-  const usr=bd.usuarios[key];
-  if(!usr||!usr.resultados)return;
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:"mm",format:"a4"});
+    const usr=bd.usuarios[key];
+    if(!usr||!usr.resultados){alert("No hay datos para generar PDF");return;}
 
-  const M=14,x1=M,x2=105,x3=200,rowH=4.5;
-  let y=28;
+    const reales=bd.reales||[];
+    const M=14,x1=M,x2=105,x3=200,rowH=4.5;
+    let y=28;
 
-  function txt(s,size,color,bold){
-    size&&doc.setFontSize(size);
-    color&&doc.setTextColor(...color);
-    bold?doc.setFont(undefined,'bold'):doc.setFont(undefined,'normal');
-  }
-
-  txt("Prode Mundial 2026",18,[0,0,0],1);doc.text("Prode Mundial 2026",M,y);y+=9;
-  txt(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,10,[60,60,60],0);doc.text(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,M,y);y+=7;
-
-  for(const g of GRUPOS){
-    if(y>270){doc.addPage();y=28}
-    txt(`Grupo ${g}`,9,[40,100,200],1);doc.text(`Grupo ${g}`,M,y);y+=5.5;
-    txt("",7.5,[0,0,0],0);
-
-    const matches=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===g);
-    for(const m of matches){
-      if(y>278){doc.addPage();y=28}
-      const r=usr.resultados[m.i];
-      const score=r?`${r.gl} - ${r.gv}`:"? - ?";
-      const line=`${m.local}  vs  ${m.visit}`;
-      const scoreW=doc.getTextWidth(score);
-      doc.text(line,M,y);
-      doc.text(score,210-M-scoreW,y);
-      y+=rowH;
+    function ts(s,size,color,bold){
+      size&&doc.setFontSize(size);
+      color&&doc.setTextColor(...color);
+      bold?doc.setFont(undefined,'bold'):doc.setFont(undefined,'normal');
     }
-    y+=1.5;
-  }
 
-  const hoy=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
-  doc.save(`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`);
+    ts("Prode Mundial 2026",18,[0,0,0],1);doc.text("Prode Mundial 2026",M,y);y+=9;
+    ts(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,10,[60,60,60],0);doc.text(`${usr.nombre} ${usr.apellido} — ${usr.fecha||'-'}`,M,y);y+=7;
+
+    if(usr.campeon||usr.goleador){
+      ts(`Campeon: ${usr.campeon||'—'}  Goleador: ${usr.goleador||'—'}`,9,[0,0,0],0);doc.text(`Campeon: ${usr.campeon||'—'}   Goleador: ${usr.goleador||'—'}`,M,y);y+=6;
+    }
+
+    for(const g of GRUPOS){
+      if(y>270){doc.addPage();y=28}
+      ts(`Grupo ${g}`,9,[40,100,200],1);doc.text(`Grupo ${g}`,M,y);y+=5.5;
+
+      const matches=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===g);
+      for(let mi=0;mi<matches.length;mi++){
+        if(y>278){doc.addPage();y=28}
+        if(mi%2===0){
+          const nf=Math.floor(mi/2)+1;
+          ts(`Fecha ${nf}`,7,[150,150,150],0);doc.text(`Fecha ${nf}`,M,y);y+=4;
+        }
+        const m=matches[mi];
+        const r=usr.resultados[m.i];
+        const score=r?`${r.gl} - ${r.gv}`:"? - ?";
+        const real=reales[m.i];
+        const realStr=real?`[${real.gl}-${real.gv}]`:"";
+        const line=`${m.local}  vs  ${m.visit}`;
+        const full=`${line}  ${score}  ${realStr}`;
+        doc.text(full,M,y);
+        const pts=calcularPts(r,real);
+        if(pts!==null)doc.text(`${pts}p`,210-M-rowH,y);
+        y+=rowH;
+      }
+      y+=1.5;
+    }
+
+    const hoy=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
+    doc.save(`prode-${usr.nombre.toLowerCase()}-${hoy}.pdf`);
+  }catch(e){
+    console.error(e);
+    alert("No se pudo generar el PDF. Probá desde otro navegador o dispositivo.");
+  }
 }
 
 function compartirRanking(){
