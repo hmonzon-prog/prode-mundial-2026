@@ -345,24 +345,48 @@ function mostrarAyuda(){
     <h3>📖 Cómo funciona el Prode</h3>
 
     <h4>🎯 Objetivo</h4>
-    <p>Pronosticar los 72 partidos de grupos + Campeón + Goleador del Mundial 2026 y sumar la mayor cantidad de puntos.</p>
+    <p>Pronosticar los 72 partidos de grupos + todos los cruces de eliminatoria + Campeón + Goleador del Mundial 2026 y sumar la mayor cantidad de puntos.</p>
 
-    <h4>📝 Cómo participar</h4>
+    <h4>📝 Cómo participar — Grupos</h4>
     <ul>
       <li>Ingresá <strong>Nombre</strong> y <strong>Apellido</strong> en la pantalla de inicio.</li>
       <li>Elegí <strong>🏆 Campeón</strong> y <strong>⚽ Goleador</strong> arriba de los grupos.</li>
-      <li>Completá los resultados de los 12 grupos separados por <strong>Fecha 1, 2 y 3</strong>.</li>
-      <li>Pasá a <strong>🏆 Eliminatoria</strong> — los cruces se arman solos según tus resultados.</li>
-      <li>Completá desde 32vos hasta la Final.</li>
-      <li>Hacé click en <strong>"🔒 Guardar Predicción"</strong> (grupos) y luego <strong>"🔒 Guardar Eliminatoria"</strong>.</li>
-      <li>Una vez guardado <strong>no se puede modificar</strong>. Si necesitás cambios, hablá con el admin.</li>
+      <li>Completá los 72 partidos de grupos separados por <strong>Fecha 1, 2 y 3</strong>.</li>
+      <li>Tocá <strong>"🔒 Guardar Predicción"</strong>.</li>
     </ul>
 
-    <h4>🔢 Sistema de puntuación</h4>
+    <h4>📝 Cómo participar — Eliminatoria</h4>
+    <ul>
+      <li>Pasá a la pestaña <strong>🏆 Eliminatoria</strong>.</li>
+      <li>Los cruces que se muestran son los <strong>reales</strong> (según los resultados que cargó el admin en grupos).</li>
+      <li>El sistema revisa los 2 equipos de cada llave contra los que vos hiciste avanzar en tus grupos.</li>
+      <li>Si <strong>coinciden ambos equipos</strong> → la llave está <strong>habilitada</strong> → podés poner resultado.</li>
+      <li>Si <strong>no coinciden</strong> → ves "🔒 No acertaste esta llave" y <strong>no podés jugarla</strong>.</li>
+      <li>Completá solo las llaves habilitadas y tocá <strong>"🔒 Guardar Eliminatoria"</strong>.</li>
+    </ul>
+
+    <h4>🔢 Sistema de puntuación — Grupos</h4>
     <ul>
       <li><span class="pts-badge pts-3">3p</span> — Resultado exacto (ej: 2-1 y terminó 2-1)</li>
       <li><span class="pts-badge pts-1">1p</span> — Ganador o empate correcto</li>
       <li><span class="pts-badge pts-0">0p</span> — Resultado incorrecto</li>
+    </ul>
+
+    <h4>🔢 Sistema de puntuación — Eliminatoria</h4>
+    <ul>
+      <li>Primero se verifica si <strong>acertaste los 2 equipos</strong> de la llave según tu pronóstico de grupos/rondas anteriores.</li>
+      <li>Si <strong>no los acertaste</strong> → <span class="pts-badge pts-0">0p</span> directo, sin importar el resultado que hayas puesto.</li>
+      <li>Si <strong>los acertaste</strong> → puntúa igual que grupos:
+        <ul style="margin-top:4px">
+          <li><span class="pts-badge pts-3">3p</span> — Resultado exacto</li>
+          <li><span class="pts-badge pts-1">1p</span> — Ganador correcto</li>
+          <li><span class="pts-badge pts-0">0p</span> — Ganador incorrecto</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h4>⭐ Bonus</h4>
+    <ul>
       <li><strong>+10 pts</strong> — Si acertás el Campeón</li>
       <li><strong>+5 pts</strong> — Si acertás el Goleador</li>
     </ul>
