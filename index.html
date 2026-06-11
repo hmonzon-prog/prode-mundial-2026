@@ -771,9 +771,32 @@ function descargarPDF(key){
   const usr=bd.usuarios[key];
   if(!usr||!usr.resultados){alert("No hay datos para generar PDF");return;}
 
+  if(window.jspdf){
+    generarPDF(key);
+  }else{
+    const urls=[
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js",
+      "https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js",
+      "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"
+    ];
+    cargarJsPDF(urls,0,key);
+  }
+}
+
+function cargarJsPDF(urls,idx,key){
+  if(idx>=urls.length){imprimirPrediccion(key);return;}
+  const s=document.createElement("script");
+  s.src=urls[idx];
+  s.onload=()=>{setTimeout(()=>{window.jspdf?generarPDF(key):cargarJsPDF(urls,idx+1,key)},300)};
+  s.onerror=()=>cargarJsPDF(urls,idx+1,key);
+  document.head.appendChild(s);
+}
+
+function generarPDF(key){
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:"mm",format:"a4"});
+    const usr=bd.usuarios[key];
     const reales=bd.reales||[];
     const M=14,rowH=4.5;
     let y=28;
@@ -806,10 +829,9 @@ function descargarPDF(key){
         const r=usr.resultados[m.i];
         const score=r?`${r.gl} - ${r.gv}`:"? - ?";
         const real=reales[m.i];
-        const realStr=real?`[${real.gl}-${real.gv}]`:"";
-        const line=`${m.local}  vs  ${m.visit}`;
-        const full=`${line}  ${score}  ${realStr}`;
+        const full=`${m.local}  vs  ${m.visit}  ${score}`;
         doc.text(full,M,y);
+        if(real){doc.text(`[${real.gl}-${real.gv}]`,105,y);}
         const pts=calcularPts(r,real);
         if(pts!==null)doc.text(`${pts}p`,210-M-rowH,y);
         y+=rowH;
