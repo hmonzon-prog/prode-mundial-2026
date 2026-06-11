@@ -425,6 +425,22 @@ function calcularPts(pred,real){
   return 0;
 }
 
+function winner(pred){
+  if(!pred||pred.gl===undefined||pred.gv===undefined)return null;
+  if(pred.gl>pred.gv)return "local";
+  if(pred.gl<pred.gv)return "visit";
+  return pred.penal||null;
+}
+
+function calcularPtsKO(pred,real){
+  if(!pred||!real||real.gl===undefined||real.gv===undefined)return null;
+  const wPred=winner(pred);
+  const wReal=winner(real);
+  if(!wPred||!wReal||wPred!==wReal)return 0;
+  if(pred.gl===real.gl&&pred.gv===real.gv)return 3;
+  return 1;
+}
+
 function calcularTabla(grupo,resultados){
   const pts=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===grupo);
   const eq={};
@@ -793,7 +809,7 @@ function generarResumen(resultados,reales,hayReales){
     gi++;
   }
   if(hayReales){
-    const total=resultados.reduce((s,r,i)=>{const p=calcularPts(r,reales[i]);return s+(p||0);},0);
+    const total=resultados.slice(0,PARTIDOS.length).reduce((s,r,i)=>{const p=calcularPts(r,reales[i]);return s+(p||0);},0);
     html+=`<tr><td colspan="${hayReales?6:4}" style="padding:6px 5px;text-align:right;font-weight:600;font-size:.85rem">TOTAL GRUPOS:</td>
       <td style="padding:6px 5px;text-align:center;color:#2563eb;font-weight:700;font-size:1rem">${total} pts</td></tr>`;
   }
@@ -801,7 +817,7 @@ function generarResumen(resultados,reales,hayReales){
 
   // KO resumen
   if(resultados.some((r,i)=>i>=72&&r)){
-    const koBracket=resolverBracket(resultados);
+    const koBracket=resolverBracket(reales);
     let koHtml=`<div style="margin-top:12px"><h3 style="margin:12px 0 6px;font-size:.9rem;color:#6b7280">🏆 Eliminatoria</h3>
       <table style="width:100%;border-collapse:collapse;font-size:.78rem">
         <tr><th style="text-align:left;padding:3px 5px;border-bottom:1px solid #e5e7eb;color:#6b7280">Fase</th>
@@ -816,7 +832,7 @@ function generarResumen(resultados,reales,hayReales){
       if(!r)continue;
       const ko=koBracket[i];
       const real=reales?reales[idx]:null;
-      const pts=calcularPts(r,real);
+      const pts=calcularPtsKO(r,real);
       if(ko.fase!==lastFase){lastFase=ko.fase;const L={"32vos":"📌 32vos","8vos":"🔵 8vos","4tos":"🟣 4tos",Semi:"🟠 Semi",Final:"🏆 Final"};koHtml+=`<tr><td colspan="${hayReales?7:5}" style="padding:5px 5px 2px;color:#2563eb;font-weight:600;font-size:.8rem">${L[ko.fase]||ko.fase}</td></tr>`}
       const penStr=r.penal?` ⚽`:"";
       koHtml+=`<tr>
@@ -854,7 +870,7 @@ function renderRanking(reales,hayReales,esAdmin){
     if(!usr.resultados||usr.resultados.length===0)return null;
     let pts=0,p3=0,p1=0;
     usr.resultados.forEach((r,i)=>{
-      const p=calcularPts(r,reales[i]);
+      const p=i<72?calcularPts(r,reales[i]):calcularPtsKO(r,reales[i]);
       if(p===3)p3++;else if(p===1)p1++;
       if(p)pts+=p;
     });
@@ -895,11 +911,11 @@ function renderRanking(reales,hayReales,esAdmin){
 }
 
 function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,editData){
-  const bracket=resolverBracket(resultados);
+  const bracket=resolverBracket(reales);
   let html=``;
   if(!koBloqueado&&bloqueado) html+=`<div class="msg warn">Completá todos los resultados de la eliminatoria y guardá al final.</div>`;
   if(koBloqueado) html+=`<div class="msg info">Eliminatoria guardada. No se puede modificar.</div>`;
-  html+=`<div class="msg info" style="margin-bottom:10px">Los equipos se completan automáticamente según tus resultados de grupo.</div>`;
+  html+=`<div class="msg info" style="margin-bottom:10px">Los cruces mostrados son los <strong>reales</strong> (según resultados cargados por el admin). Solo sumás puntos en las llaves donde aciertes el equipo que avanza.</div>`;
   const fases=[{key:"32vos",label:"📌 32vos de Final",matches:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
     {key:"8vos",label:"🔵 8vos de Final",matches:[16,17,18,19,20,21,22,23]},
     {key:"4tos",label:"🟣 4tos de Final",matches:[24,25,26,27]},
@@ -923,12 +939,13 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
         val={gl:"",gv:""};
       }
       const predUsr=resultados[ko.idx]||null;
-      const ptsG=calcularPts(predUsr,r);
+      const ptsG=calcularPtsKO(predUsr,r);
+      const wAcertado=ptsG!==null&&ptsG!==0&&winner(predUsr)===winner(r);
       const editable=!koBloqueado||ADMIN_MODE;
       const penalVal=val.penal||"";
       html+=`<div class="partido${cerrado?' cerrado':''}">
         ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
-        <div class="eq local">${ko.localEquipo}</div>
+        <div class="eq local">${ko.localEquipo}${wAcertado?` <span style="color:#059669;font-size:.7rem">✓</span>`:ptsG!==null&&ptsG===0?` <span style="color:#ef4444;font-size:.7rem">✗</span>`:''}</div>
         <div class="score-input">
           ${cerrado
             ?`<span class="score-display">${r.gl}-${r.gv}</span>`
@@ -1081,7 +1098,7 @@ function generarPDF(key){
     }
 
     // KO matches in PDF
-    const koBracket=resolverBracket(usr.resultados);
+    const koBracket=resolverBracket(reales);
     const koExiste=usr.resultados.some((r,i)=>i>=72&&r);
     if(koExiste){
       if(y>250){doc.addPage();y=28}
@@ -1104,7 +1121,7 @@ function generarPDF(key){
           const full=`${ko.localEquipo}  vs  ${ko.visitEquipo}  ${r.gl}-${r.gv}${pen}`;
           doc.text(full,M,y);
           if(real)doc.text(`[${real.gl}-${real.gv}]`,105,y);
-          const pts=calcularPts(r,real);
+          const pts=calcularPtsKO(r,real);
           if(pts!==null)doc.text(`${pts}p`,210-M-rowH,y);
           y+=rowH;
         }
@@ -1165,7 +1182,7 @@ function imprimirPrediccion(key){
   }
   const koExiste=usr.resultados.some((r,i)=>i>=72&&r);
   if(koExiste){
-    const koBracket=resolverBracket(usr.resultados);
+    const koBracket=resolverBracket(reales);
     h+=`<div class="g" style="margin-top:14px"><h2 style="font-size:15px;color:#d29922">Eliminatoria</h2>`;
     const fases=[{key:"32vos",label:"32vos de Final",matches:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
       {key:"8vos",label:"8vos de Final",matches:[16,17,18,19,20,21,22,23]},
@@ -1178,7 +1195,7 @@ function imprimirPrediccion(key){
         const r=usr.resultados[ko.idx];
         if(!r)continue;
         const real=reales[ko.idx];
-        const pts=calcularPts(r,real);
+        const pts=calcularPtsKO(r,real);
         const fl=f.label.replace("vos","");
         const pen=r.penal?"(pen)":"";
         h+=`<div class="m" style="font-size:10px"><span style="color:#666;min-width:50px">${f.key}</span><span>${ko.localEquipo} vs ${ko.visitEquipo}</span><span class="pred">${r.gl}-${r.gv}${pen}</span>${real?`<span style="color:#d29922;font-size:10px">[${real.gl}-${real.gv}]</span>`:''}<span class="pts">${pts!==null?pts+'p':''}</span></div>`;
@@ -1199,7 +1216,7 @@ function compartirRanking(){
     if(!usr.resultados||usr.resultados.length===0)return null;
     let pts=0,p3=0,p1=0;
     usr.resultados.forEach((r,i)=>{
-      const p=calcularPts(r,reales[i]);
+      const p=i<72?calcularPts(r,reales[i]):calcularPtsKO(r,reales[i]);
       if(p===3)p3++;else if(p===1)p1++;
       if(p)pts+=p;
     });
