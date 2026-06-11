@@ -677,7 +677,7 @@ function renderRanking(reales,hayReales,esAdmin){
     <h4>👥 Participantes (${allUsers.length})</h4>
     <div class="participantes-grid">${allUsers.map(([k,u])=>{
       const ok=u.resultados&&u.resultados.length>0;
-      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${u.nombre} ${u.apellido}${esAdmin&&ok?` <span style="cursor:pointer;color:#2563eb;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
+      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${k}')">${u.nombre} ${u.apellido}</span>`:`${u.nombre} ${u.apellido}`}${esAdmin&&ok?` <span style="cursor:pointer;color:#059669;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
     }).join("")}</div>
   </div>`;
 
@@ -715,7 +715,7 @@ function renderRanking(reales,hayReales,esAdmin){
     const efect=maxPts>0?((f.pts/maxPts)*100).toFixed(1):"0.0";
     html+=`<tr>
       <td class="pos ${i<3?`pos-${i+1}`:''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
-      <td class="nombre">${f.nombre} ${f.apellido}</td>
+      <td class="nombre">${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${f.key}')">${f.nombre} ${f.apellido}</span>`:`${f.nombre} ${f.apellido}`}</td>
       <td class="pts-total">${f.pts}</td>
       <td style="text-align:center;color:#059669;font-weight:600">${f.p3}</td>
       <td style="text-align:center;color:#d29922;font-weight:600">${f.p1}</td>
