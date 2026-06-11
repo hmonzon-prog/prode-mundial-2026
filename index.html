@@ -675,7 +675,7 @@ function renderRanking(reales,hayReales,esAdmin){
     <h4>👥 Participantes (${allUsers.length})</h4>
     <div class="participantes-grid">${allUsers.map(([k,u])=>{
       const ok=u.resultados&&u.resultados.length>0;
-      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${u.nombre} ${u.apellido}</span>`;
+      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${u.nombre} ${u.apellido}${esAdmin&&ok?` <span style="cursor:pointer;color:#2563eb;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
     }).join("")}</div>
   </div>`;
 
@@ -720,7 +720,7 @@ function renderRanking(reales,hayReales,esAdmin){
       <td style="text-align:center;color:#9ca3af">${p0}</td>
       <td style="text-align:center;color:#6b7280">${efect}%</td>
       ${hayBonus?`<td style="text-align:center;color:#d29922;font-weight:600;font-size:.8rem">${f.bonus>0?'+'+f.bonus:'-'}</td>`:''}
-      ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#d29922;font-size:.75rem;text-decoration:underline" onclick="editarUsuario('${f.key}')">Editar</span></td>`:''}
+      ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:#d29922;font-size:.75rem;text-decoration:underline;margin-right:6px" onclick="editarUsuario('${f.key}')">Editar</span><span style="cursor:pointer;color:#2563eb;font-size:.75rem;text-decoration:underline" onclick="descargarPDF('${f.key}')">📄 PDF</span></td>`:''}
     </tr>`;
   }
   html+=`</table></div>`;
