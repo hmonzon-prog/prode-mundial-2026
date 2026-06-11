@@ -1,6 +1,24 @@
-# Historial del Prode Mundial 2026
+# Prode Mundial 2026
 
-## Resumen de cambios realizados
+## ¿Qué es un Prode?
+
+Es un juego de predicción deportiva. Cada participante pronostica los resultados de los partidos del Mundial (quién gana o si empatan, y por qué resultado). Se acumulan puntos según la precisión de los pronósticos. Gana el que más puntos sume al final del torneo.
+
+## Sistema de puntuación
+
+- **3 puntos** — Resultado exacto (ej: pronosticaste 2-1 y terminó 2-1)
+- **1 punto** — Ganador o empate correcto (ej: pronosticaste 3-1 y ganó el mismo equipo 1-0)
+- **0 puntos** — Resultado incorrecto
+- **+10 puntos** — Si acertás el Campeón del mundial
+- **+5 puntos** — Si acertás el Goleador del mundial
+- **Desempate**: si hay igualdad en puntos, gana quien tenga más resultados exactos (3p)
+
+## Fases del juego
+
+1. **Fase de grupos** (72 partidos): 12 grupos de 4 equipos, cada grupo tiene 3 fechas con 2 partidos cada una.
+2. **Fase eliminatoria** (31 partidos): 32vos → 8vos → 4tos → Semifinales → Final. Los cruces se arman automáticamente según los resultados de grupo de cada usuario.
+
+## Historial de cambios realizados
 
 ### 1. Modal de ayuda actualizado
 - Se agregó info sobre: Campeón (+10 pts), Goleador (+5 pts), desempate por 3p, PDF descargable, compartir ranking como imagen, fechas separadas por jornada.
