@@ -107,6 +107,11 @@ header .btn-admin.admin-activo{border-color:#d29922;color:#d29922}
 .ranking .pts-total{font-weight:700;color:#2563eb;text-align:center}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.participantes{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.participantes h4{margin:0 0 8px;font-size:.88rem;color:#1a1a2e}
+.participantes-grid{display:flex;flex-wrap:wrap;gap:4px 12px}
+.participantes-grid .part{font-size:.8rem;color:#6b7280;padding:2px 0}
+.participantes-grid .part.ok{color:#059669}
 .loading{text-align:center;padding:60px 20px;color:#6b7280}
 .loading .spinner{width:32px;height:32px;border-width:3px;display:block;margin:16px auto}
 .extra-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:end}
@@ -664,11 +669,20 @@ function generarResumen(resultados,reales,hayReales){
 }
 
 function renderRanking(reales,hayReales,esAdmin){
+  const allUsers=Object.entries(bd.usuarios).filter(([k])=>k!=="admin_admin");
+  let html=`<div class="participantes">
+    <h4>👥 Participantes (${allUsers.length})</h4>
+    <div class="participantes-grid">${allUsers.map(([k,u])=>{
+      const ok=u.resultados&&u.resultados.length>0;
+      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${u.nombre} ${u.apellido}</span>`;
+    }).join("")}</div>
+  </div>`;
+
   if(!hayReales){
-    return `<div class="msg info">Los resultados reales aún no fueron cargados. Ingresá como 🎯 Admin para cargarlos.</div>`;
+    return html+`<div class="msg info" style="margin-top:12px">Los resultados reales aún no fueron cargados. Ingresá como 🎯 Admin para cargarlos.</div>`;
   }
 
-  const entries=Object.entries(bd.usuarios).filter(([k])=>k!=="admin_admin");
+  const entries=allUsers;
   const filas=entries.map(([k,usr])=>{
     if(!usr.resultados||usr.resultados.length===0)return null;
     let pts=0,p3=0,p1=0;
@@ -686,10 +700,10 @@ function renderRanking(reales,hayReales,esAdmin){
 
   filas.sort((a,b)=>b.pts-a.pts || b.p3-a.p3 || b.p1-a.p1);
 
-  if(filas.length===0) return `<div class="msg warn">Todavía no hay participantes.</div>`;
+  if(filas.length===0) return html+`<div class="msg warn">Nadie cargó su predicción todavía.</div>`;
 
   const hayBonus=bd.campeon_real||bd.goleador_real;
-  let html=`<div class="ranking"><table>
+  html+=`<div class="ranking"><table>
     <tr><th>#</th><th>Nombre</th><th style="text-align:center">Pts</th><th style="text-align:center">3</th><th style="text-align:center">1</th><th style="text-align:center">0</th><th style="text-align:center">Efectividad</th>${hayBonus?'<th style="text-align:center">Bonus</th>':''}${esAdmin?'<th style="text-align:center">Acción</th>':''}</tr>`;
   for(let i=0;i<filas.length;i++){
     const f=filas[i];
