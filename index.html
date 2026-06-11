@@ -558,6 +558,8 @@ function renderApp(){
       let val;
       if(ADMIN_MODE&&EDITANDO_KEY){
         val=data?data.resultados[p.idx]||{gl:"",gv:""}:{gl:"",gv:""};
+      }else if(ADMIN_MODE){
+        val=reales[p.idx]||{gl:"",gv:""};
       }else if(bloqueado&&!ADMIN_MODE){
         val=data.resultados[p.idx]||{gl:"",gv:""};
       }else{
@@ -913,6 +915,8 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
       if(ADMIN_MODE&&EDITANDO_KEY){
         const ed=editData?editData.resultados[ko.idx]||{gl:"",gv:""}:{gl:"",gv:""};
         val=ed;
+      }else if(ADMIN_MODE){
+        val=reales[ko.idx]||{gl:"",gv:""};
       }else if((bloqueado||koBloqueado)&&!ADMIN_MODE){
         val=resultados[ko.idx]||{gl:"",gv:""};
       }else{
