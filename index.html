@@ -73,6 +73,8 @@ header .btn-admin.admin-activo{border-color:#d29922;color:#d29922}
 .grupo-body{padding:2px 12px 8px}
 .partido{display:grid;grid-template-columns:1fr auto 1fr;gap:4px;align-items:center;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:.88rem}
 .partido:last-child{border-bottom:none}
+.partido.cerrado{opacity:.6;position:relative}
+.cerrado-badge{position:absolute;top:-2px;right:0;font-size:.6rem;color:#9ca3af;font-weight:500;letter-spacing:.3px;z-index:1}
 .eq{font-weight:500}
 .eq.local{text-align:right}
 .eq.visit{text-align:left}
@@ -489,6 +491,7 @@ function renderApp(){
         html+=`<div style="font-size:.72rem;color:#9ca3af;padding:6px 0 2px;font-weight:500;letter-spacing:.5px">··· Fecha ${numF} ···</div>`;
       }
       const r=reales[p.idx]||{};
+      const cerrado=reales[p.idx]&&reales[p.idx].gl!==undefined&&!(ADMIN_MODE&&!EDITANDO_KEY);
       let val;
       if(ADMIN_MODE&&EDITANDO_KEY){
         val=data?data.resultados[p.idx]||{gl:"",gv:""}:{gl:"",gv:""};
@@ -500,16 +503,19 @@ function renderApp(){
       const predUsr=data?data.resultados[p.idx]:null;
       const ptsG=calcularPts(predUsr,r);
       const editable=!bloqueado||ADMIN_MODE;
-      html+=`<div class="partido">
+      html+=`<div class="partido${cerrado?' cerrado':''}">
+        ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
         <div class="eq local">${p.local}</div>
         <div class="score-input">
-          ${!editable
-            ?`<span class="score-display">${val.gl!==''?val.gl:'?'}-${val.gv!==''?val.gv:'?'}</span>`
-            :`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
-              <span class="sep">-</span>
-              <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
+          ${cerrado
+            ?`<span class="score-display">${r.gl}-${r.gv}</span>`
+            :!editable
+              ?`<span class="score-display">${val.gl!==''?val.gl:'?'}-${val.gv!==''?val.gv:'?'}</span>`
+              :`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
+                <span class="sep">-</span>
+                <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
           }
-          ${ptsG!==null?`<span class="pts-badge pts-${ptsG}">${ptsG}p</span>`:''}
+          ${!cerrado&&ptsG!==null?`<span class="pts-badge pts-${ptsG}">${ptsG}p</span>`:''}
         </div>
         <div class="eq visit">${p.visit}</div>
       </div>`;
