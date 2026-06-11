@@ -474,6 +474,12 @@ function resolverBracket(resultados){
   return KO_PARTIDOS.map((ko,i)=>({...ko,idx:72+i,localEquipo:resolverSlot(ko.local,resultados),visitEquipo:resolverSlot(ko.visit,resultados)}));
 }
 
+function koAcertadas(resultadosUsuario, reales){
+  const rb = resolverBracket(reales||[]);
+  const ub = resolverBracket(resultadosUsuario||[]);
+  return KO_PARTIDOS.map((ko,i) => ub[i].localEquipo === rb[i].localEquipo && ub[i].visitEquipo === rb[i].visitEquipo);
+}
+
 function renderApp(){
   if(!bd)return;
 
@@ -818,6 +824,7 @@ function generarResumen(resultados,reales,hayReales){
   // KO resumen
   if(resultados.some((r,i)=>i>=72&&r)){
     const koBracket=resolverBracket(reales);
+    const acertadasKO=koAcertadas(resultados,reales);
     let koHtml=`<div style="margin-top:12px"><h3 style="margin:12px 0 6px;font-size:.9rem;color:#6b7280">🏆 Eliminatoria</h3>
       <table style="width:100%;border-collapse:collapse;font-size:.78rem">
         <tr><th style="text-align:left;padding:3px 5px;border-bottom:1px solid #e5e7eb;color:#6b7280">Fase</th>
@@ -832,7 +839,7 @@ function generarResumen(resultados,reales,hayReales){
       if(!r)continue;
       const ko=koBracket[i];
       const real=reales?reales[idx]:null;
-      const pts=calcularPtsKO(r,real);
+      const pts=acertadasKO[i]?calcularPtsKO(r,real):0;
       if(ko.fase!==lastFase){lastFase=ko.fase;const L={"32vos":"📌 32vos","8vos":"🔵 8vos","4tos":"🟣 4tos",Semi:"🟠 Semi",Final:"🏆 Final"};koHtml+=`<tr><td colspan="${hayReales?7:5}" style="padding:5px 5px 2px;color:#2563eb;font-weight:600;font-size:.8rem">${L[ko.fase]||ko.fase}</td></tr>`}
       const penStr=r.penal?` ⚽`:"";
       koHtml+=`<tr>
@@ -844,6 +851,11 @@ function generarResumen(resultados,reales,hayReales){
         ${hayReales?`<td style="padding:2px 5px;border-bottom:1px solid #f3f4f6;text-align:center;color:#d29922;font-weight:600">${real!==null&&real!==undefined?real.gl+'-'+real.gv:'-'}</td>
         <td style="padding:2px 5px;border-bottom:1px solid #f3f4f6;text-align:center">${pts!==null?`<span class="pts-badge pts-${pts}">${pts}</span>`:'-'}</td>`:''}
       </tr>`;
+    }
+    if(hayReales){
+      const totalKO=resultados.reduce((s,r,i)=>{if(i<72||!r)return s;const p=acertadasKO[i-72]?calcularPtsKO(r,reales[i]):0;return s+(p||0);},0);
+      koHtml+=`<tr><td colspan="${hayReales?6:4}" style="padding:6px 5px;text-align:right;font-weight:600;font-size:.85rem">TOTAL ELIMINATORIA:</td>
+        <td style="padding:6px 5px;text-align:center;color:#2563eb;font-weight:700;font-size:1rem">${totalKO} pts</td></tr>`;
     }
     koHtml+=`</table></div>`;
     html+=koHtml;
@@ -868,9 +880,10 @@ function renderRanking(reales,hayReales,esAdmin){
   const entries=allUsers;
   const filas=entries.map(([k,usr])=>{
     if(!usr.resultados||usr.resultados.length===0)return null;
+    const acertRank=koAcertadas(usr.resultados,reales);
     let pts=0,p3=0,p1=0;
     usr.resultados.forEach((r,i)=>{
-      const p=i<72?calcularPts(r,reales[i]):calcularPtsKO(r,reales[i]);
+      const p=i<72?calcularPts(r,reales[i]):acertRank[i-72]?calcularPtsKO(r,reales[i]):0;
       if(p===3)p3++;else if(p===1)p1++;
       if(p)pts+=p;
     });
@@ -912,10 +925,11 @@ function renderRanking(reales,hayReales,esAdmin){
 
 function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,editData){
   const bracket=resolverBracket(reales);
+  const acertadas=koAcertadas(resultados,reales);
   let html=``;
-  if(!koBloqueado&&bloqueado) html+=`<div class="msg warn">Completá todos los resultados de la eliminatoria y guardá al final.</div>`;
+  if(!koBloqueado&&bloqueado) html+=`<div class="msg warn">Completá los resultados de las llaves que acertaste y guardá al final.</div>`;
   if(koBloqueado) html+=`<div class="msg info">Eliminatoria guardada. No se puede modificar.</div>`;
-  html+=`<div class="msg info" style="margin-bottom:10px">Los cruces mostrados son los <strong>reales</strong> (según resultados cargados por el admin). Solo sumás puntos en las llaves donde aciertes el equipo que avanza.</div>`;
+  html+=`<div class="msg info" style="margin-bottom:10px">Los cruces mostrados son los <strong>reales</strong>. Solo podés jugar las llaves que <strong>acertaste</strong> según tu pronóstico de grupos/rondas anteriores.</div>`;
   const fases=[{key:"32vos",label:"📌 32vos de Final",matches:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
     {key:"8vos",label:"🔵 8vos de Final",matches:[16,17,18,19,20,21,22,23]},
     {key:"4tos",label:"🟣 4tos de Final",matches:[24,25,26,27]},
@@ -927,6 +941,7 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
       const ko=bracket[mi];
       const r=reales[ko.idx]||{};
       const cerrado=reales[ko.idx]&&reales[ko.idx].gl!==undefined&&!(ADMIN_MODE&&!EDITANDO_KEY);
+      const puedeJugar=ADMIN_MODE||acertadas[mi];
       let val;
       if(ADMIN_MODE&&EDITANDO_KEY){
         const ed=editData?editData.resultados[ko.idx]||{gl:"",gv:""}:{gl:"",gv:""};
@@ -943,6 +958,15 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
       const wAcertado=ptsG!==null&&ptsG!==0&&winner(predUsr)===winner(r);
       const editable=!koBloqueado||ADMIN_MODE;
       const penalVal=val.penal||"";
+      if(!puedeJugar&&!ADMIN_MODE){
+        html+=`<div class="partido cerrado">
+          <span class="cerrado-badge">🔒</span>
+          <div class="eq local" style="opacity:.5">${ko.localEquipo}</div>
+          <div style="font-size:.7rem;color:#ef4444;text-align:center;grid-column:2">No acertaste esta llave</div>
+          <div class="eq visit" style="opacity:.5">${ko.visitEquipo}</div>
+        </div>`;
+        continue;
+      }
       html+=`<div class="partido${cerrado?' cerrado':''}">
         ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
         <div class="eq local">${ko.localEquipo}${wAcertado?` <span style="color:#059669;font-size:.7rem">✓</span>`:ptsG!==null&&ptsG===0?` <span style="color:#ef4444;font-size:.7rem">✗</span>`:''}</div>
@@ -1099,6 +1123,7 @@ function generarPDF(key){
 
     // KO matches in PDF
     const koBracket=resolverBracket(reales);
+    const acertadasPDF=koAcertadas(usr.resultados,reales);
     const koExiste=usr.resultados.some((r,i)=>i>=72&&r);
     if(koExiste){
       if(y>250){doc.addPage();y=28}
@@ -1121,7 +1146,7 @@ function generarPDF(key){
           const full=`${ko.localEquipo}  vs  ${ko.visitEquipo}  ${r.gl}-${r.gv}${pen}`;
           doc.text(full,M,y);
           if(real)doc.text(`[${real.gl}-${real.gv}]`,105,y);
-          const pts=calcularPtsKO(r,real);
+          const pts=acertadasPDF[mi]?calcularPtsKO(r,real):0;
           if(pts!==null)doc.text(`${pts}p`,210-M-rowH,y);
           y+=rowH;
         }
@@ -1183,6 +1208,7 @@ function imprimirPrediccion(key){
   const koExiste=usr.resultados.some((r,i)=>i>=72&&r);
   if(koExiste){
     const koBracket=resolverBracket(reales);
+    const acertadasPrint=koAcertadas(usr.resultados,reales);
     h+=`<div class="g" style="margin-top:14px"><h2 style="font-size:15px;color:#d29922">Eliminatoria</h2>`;
     const fases=[{key:"32vos",label:"32vos de Final",matches:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
       {key:"8vos",label:"8vos de Final",matches:[16,17,18,19,20,21,22,23]},
@@ -1195,7 +1221,7 @@ function imprimirPrediccion(key){
         const r=usr.resultados[ko.idx];
         if(!r)continue;
         const real=reales[ko.idx];
-        const pts=calcularPtsKO(r,real);
+        const pts=acertadasPrint[mi]?calcularPtsKO(r,real):0;
         const fl=f.label.replace("vos","");
         const pen=r.penal?"(pen)":"";
         h+=`<div class="m" style="font-size:10px"><span style="color:#666;min-width:50px">${f.key}</span><span>${ko.localEquipo} vs ${ko.visitEquipo}</span><span class="pred">${r.gl}-${r.gv}${pen}</span>${real?`<span style="color:#d29922;font-size:10px">[${real.gl}-${real.gv}]</span>`:''}<span class="pts">${pts!==null?pts+'p':''}</span></div>`;
@@ -1214,9 +1240,10 @@ function compartirRanking(){
   const hayBonus=bd.campeon_real||bd.goleador_real;
   const filas=entries.map(([k,usr])=>{
     if(!usr.resultados||usr.resultados.length===0)return null;
+    const acertShare=koAcertadas(usr.resultados,reales);
     let pts=0,p3=0,p1=0;
     usr.resultados.forEach((r,i)=>{
-      const p=i<72?calcularPts(r,reales[i]):calcularPtsKO(r,reales[i]);
+      const p=i<72?calcularPts(r,reales[i]):acertShare[i-72]?calcularPtsKO(r,reales[i]):0;
       if(p===3)p3++;else if(p===1)p1++;
       if(p)pts+=p;
     });
