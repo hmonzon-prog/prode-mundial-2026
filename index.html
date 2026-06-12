@@ -1009,7 +1009,7 @@ function renderRanking(reales,hayReales,esAdmin){
     <h4>👥 Participantes (${allUsers.length})</h4>
     <div class="participantes-grid">${allUsers.map(([k,u])=>{
       const ok=u.resultados&&u.resultados.length>0;
-      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${k}')">${u.nombre} ${u.apellido}</span>`:`${u.nombre} ${u.apellido}`}${esAdmin&&!ok?` <span style="cursor:pointer;color:#ef4444;font-size:.7rem;text-decoration:underline" onclick="eliminarUsuario('${k}')">Eliminar</span>`:''}${esAdmin&&ok?` <span style="cursor:pointer;color:#059669;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
+      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${k}')">${u.nombre} ${u.apellido}</span>`:`${u.nombre} ${u.apellido}`}${esAdmin?` <span style="cursor:pointer;color:#ef4444;font-size:.7rem;text-decoration:underline;margin-left:4px" onclick="eliminarUsuario('${k}')">Eliminar</span>`:''}${esAdmin&&ok?` <span style="cursor:pointer;color:#059669;font-size:.7rem;text-decoration:underline;margin-left:4px" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
     }).join("")}</div>
   </div>`;
 
