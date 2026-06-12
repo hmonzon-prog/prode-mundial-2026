@@ -713,7 +713,8 @@ function renderApp(){
   }else if(ADMIN_MODE){
     html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button>
     ${bd.usuarios["claudio_lencina"]&&bd.usuarios["claudio_lencina"].resultados&&bd.usuarios["claudio_lencina"].resultados.length>0?'':`<button class="btn-sec" onclick="importarClaudio()">📥 Claudio</button>`}
-    ${bd.usuarios["gaston_lobo"]&&bd.usuarios["gaston_lobo"].resultados&&bd.usuarios["gaston_lobo"].resultados.length>0?'':`<button class="btn-sec" onclick="importarGaston()">📥 Gastón</button>`}</div>`;
+    ${bd.usuarios["gaston_lobo"]&&bd.usuarios["gaston_lobo"].resultados&&bd.usuarios["gaston_lobo"].resultados.length>0?'':`<button class="btn-sec" onclick="importarGaston()">📥 Gastón</button>`}
+    ${bd.usuarios["brian_trinidad"]&&bd.usuarios["brian_trinidad"].resultados&&bd.usuarios["brian_trinidad"].resultados.length>0?'':`<button class="btn-sec" onclick="importarBrian()">📥 Brian</button>`}</div>`;
   }else if(bloqueado){
     html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
   }else if(!bloqueado){
@@ -890,6 +891,30 @@ async function importarGaston(){
   await guardarBD({["usuarios."+key]: bd.usuarios[key]});
   renderApp();
   alert("Gaston Lobo importado.");
+}
+
+async function importarBrian(){
+  const key="brian_trinidad";
+  if(bd.usuarios[key]&&bd.usuarios[key].resultados&&bd.usuarios[key].resultados.length>0){
+    if(!confirm("Brian ya tiene predicciones. ¿Sobrescribir?"))return;
+  }
+  const r=new Array(72).fill(null);
+  r[0]=null;r[1]={gl:1,gv:2};r[2]={gl:2,gv:1};r[3]={gl:1,gv:3};r[4]={gl:1,gv:1};r[5]={gl:0,gv:1};
+  r[6]={gl:1,gv:1};r[7]={gl:0,gv:2};r[8]={gl:2,gv:1};r[9]={gl:1,gv:0};r[10]={gl:3,gv:0};r[11]={gl:1,gv:1};
+  r[12]={gl:3,gv:1};r[13]={gl:0,gv:2};r[14]={gl:1,gv:2};r[15]={gl:4,gv:0};r[16]={gl:0,gv:3};r[17]={gl:2,gv:1};
+  r[18]={gl:1,gv:2};r[19]={gl:1,gv:1};r[20]={gl:1,gv:0};r[21]={gl:0,gv:2};r[22]={gl:3,gv:2};r[23]={gl:1,gv:0};
+  r[24]={gl:4,gv:0};r[25]={gl:0,gv:2};r[26]={gl:3,gv:0};r[27]={gl:2,gv:0};r[28]={gl:0,gv:1};r[29]={gl:1,gv:3};
+  r[30]={gl:2,gv:0};r[31]={gl:0,gv:1};r[32]={gl:2,gv:0};r[33]={gl:2,gv:0};r[34]={gl:1,gv:2};r[35]={gl:0,gv:3};
+  r[36]={gl:3,gv:0};r[37]={gl:1,gv:2};r[38]={gl:2,gv:0};r[39]={gl:0,gv:0};r[40]={gl:0,gv:1};r[41]={gl:1,gv:3};
+  r[42]={gl:4,gv:0};r[43]={gl:0,gv:2};r[44]={gl:3,gv:0};r[45]={gl:3,gv:0};r[46]={gl:0,gv:1};r[47]={gl:0,gv:2};
+  r[48]={gl:2,gv:0};r[49]={gl:1,gv:0};r[50]={gl:3,gv:0};r[51]={gl:1,gv:1};r[52]={gl:0,gv:2};r[53]={gl:1,gv:0};
+  r[54]={gl:3,gv:0};r[55]={gl:1,gv:1};r[56]={gl:2,gv:0};r[57]={gl:0,gv:1};r[58]={gl:1,gv:2};r[59]={gl:0,gv:4};
+  r[60]={gl:3,gv:0};r[61]={gl:0,gv:3};r[62]={gl:3,gv:0};r[63]={gl:2,gv:0};r[64]={gl:1,gv:3};r[65]={gl:1,gv:1};
+  r[66]={gl:2,gv:0};r[67]={gl:1,gv:0};r[68]={gl:2,gv:1};r[69]={gl:1,gv:2};r[70]={gl:0,gv:3};r[71]={gl:2,gv:0};
+  bd.usuarios[key]={nombre:"Brian",apellido:"Trinidad",fecha:new Date().toLocaleString("es-AR"),resultados:r,campeon:"España",goleador:"Julián Álvarez"};
+  await guardarBD({["usuarios."+key]: bd.usuarios[key]});
+  renderApp();
+  alert("Brian Trinidad importado.");
 }
 
 async function guardarResultadosAdmin(){
