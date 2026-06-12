@@ -1100,7 +1100,6 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
   if((!hayReales||!bracketListo)&&!ADMIN_MODE){
     return `<div class="msg info">📅 Los grupos aún no terminaron. Una vez que el admin cargue los resultados reales y los cruces estén definidos, vas a poder ver y jugar la eliminatoria.</div>`;
   }
-  const bracket=resolverBracket(reales);
   const acertadas=koAcertadas(resultados,reales);
   let html=``;
   if(!koBloqueado&&bloqueado) html+=`<div class="msg warn">Completá los resultados de las llaves que acertaste y guardá al final.</div>`;
