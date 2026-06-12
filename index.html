@@ -1095,8 +1095,10 @@ function renderRanking(reales,hayReales,esAdmin){
 }
 
 function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,editData){
-  if(!hayReales){
-    return `<div class="msg info">📅 Los resultados de la fase de grupos aún no fueron cargados. Una vez que el admin cargue los resultados reales, vas a poder ver los cruces de eliminatoria.</div>`;
+  const bracket=resolverBracket(reales);
+  const bracketListo=bracket.every(ko=>ko.localEquipo!=="—"&&ko.visitEquipo!=="—");
+  if((!hayReales||!bracketListo)&&!ADMIN_MODE){
+    return `<div class="msg info">📅 Los grupos aún no terminaron. Una vez que el admin cargue los resultados reales y los cruces estén definidos, vas a poder ver y jugar la eliminatoria.</div>`;
   }
   const bracket=resolverBracket(reales);
   const acertadas=koAcertadas(resultados,reales);
