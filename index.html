@@ -706,8 +706,8 @@ function renderApp(){
     </div>`;
   }else if(ADMIN_MODE){
     html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button>
-    <button class="btn-sec" onclick="importarClaudio()">📥 Claudio</button>
-    <button class="btn-sec" onclick="importarGaston()">📥 Gastón</button></div>`;
+    ${bd.usuarios["claudio_lencina"]&&bd.usuarios["claudio_lencina"].resultados&&bd.usuarios["claudio_lencina"].resultados.length>0?'':`<button class="btn-sec" onclick="importarClaudio()">📥 Claudio</button>`}
+    ${bd.usuarios["gaston_lobo"]&&bd.usuarios["gaston_lobo"].resultados&&bd.usuarios["gaston_lobo"].resultados.length>0?'':`<button class="btn-sec" onclick="importarGaston()">📥 Gastón</button>`}</div>`;
   }else if(bloqueado){
     html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
   }else if(!bloqueado){
