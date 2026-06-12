@@ -921,7 +921,7 @@ async function guardarResultadosAdmin(){
   bd.reales=reales;
   bd.campeon_real=campeonReal?campeonReal.value:"";
   bd.goleador_real=goleadorReal?goleadorReal.value.trim():"";
-  await guardarBD();
+  await guardarBD({reales:bd.reales, campeon_real:bd.campeon_real, goleador_real:bd.goleador_real});
   renderApp();
 }
 
@@ -1149,9 +1149,9 @@ function editarUsuario(key){
 async function eliminarUsuario(key){
   const u=bd.usuarios[key];
   if(!u)return;
-  if(!confirm(`¿Eliminar a ${u.nombre} ${u.apellido}? No tiene predicciones guardadas.`))return;
+  if(!confirm(`¿Eliminar a ${u.nombre} ${u.apellido}?`))return;
   delete bd.usuarios[key];
-  await guardarBD();
+  try{await DB_REF.update({["usuarios."+key]: firebase.firestore.FieldValue.delete()})}catch(e){alert("Error: "+e.message)}
   renderApp();
 }
 
