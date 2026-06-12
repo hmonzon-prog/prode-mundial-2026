@@ -354,7 +354,7 @@ async function loginAdmin(){
     sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
     if(bd&&!bd.usuarios["admin_admin"]){
       bd.usuarios["admin_admin"]={nombre:"Admin",apellido:"Admin",fecha:"-",resultados:[]};
-      guardarBD();
+      await guardarBD({["usuarios."+"admin_admin"]: bd.usuarios["admin_admin"]});
     }
     document.getElementById("modal-admin-auth").remove();
     renderApp();
@@ -372,13 +372,13 @@ async function registrarAdmin(){
   try{
     const cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
     bd.admin_email=email;
-    await guardarBD();
+    await guardarBD({admin_email:email});
     AUTH_USER=cred.user;
     ADMIN_MODE=true;
     USUARIO={nombre:"Admin",apellido:"Admin",key:"admin_admin"};
     sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
     bd.usuarios["admin_admin"]={nombre:"Admin",apellido:"Admin",fecha:"-",resultados:[]};
-    await guardarBD();
+    await guardarBD({["usuarios."+"admin_admin"]: bd.usuarios["admin_admin"]});
     document.getElementById("modal-admin-auth").remove();
     renderApp();
   }catch(e){
