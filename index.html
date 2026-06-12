@@ -387,11 +387,12 @@ function doLogin(){
   const err=document.getElementById("loginError");
   if(!nom||!ape){err.textContent="Completá nombre y apellido";return}
   err.textContent="";
-  USUARIO={nombre:nom,apellido:ape,key:nom.toLowerCase()+"_"+ape.toLowerCase()};
+  const key=normalizeKey(nom+"_"+ape);
+  USUARIO={nombre:nom,apellido:ape,key};
   ADMIN_MODE=false;
   sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
-  if(bd&&!bd.usuarios[USUARIO.key]){
-    bd.usuarios[USUARIO.key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
+  if(bd&&!bd.usuarios[key]){
+    bd.usuarios[key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
     guardarBD();
   }
   renderApp();
@@ -498,6 +499,10 @@ function toggleAdmin(){
 }
 
 // === LOGICA ===
+function normalizeKey(s){
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9_]/g,"");
+}
+
 function calcularPts(pred,real){
   if(!pred||!real||real.gl===undefined||real.gv===undefined)return null;
   if(pred.gl===real.gl&&pred.gv===real.gv)return 3;
