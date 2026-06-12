@@ -277,12 +277,9 @@ async function initBD(){
 
 async function guardarBD(updates){
   if(!bd) return;
+  if(!updates){console.warn("guardarBD sin updates — ignorado");return}
   try{
-    if(updates){
-      await DB_REF.update(updates);
-    }else{
-      await DB_REF.set(bd);
-    }
+    await DB_REF.update(updates);
   }catch(e){
     alert("Error al guardar: "+e.message);
   }
@@ -397,8 +394,12 @@ async function doLogin(){
   ADMIN_MODE=false;
   sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
   if(bd&&!bd.usuarios[key]){
-    bd.usuarios[key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
-    await guardarBD({["usuarios."+key]: bd.usuarios[key]});
+    // refrescar desde Firestore para no pisar datos de otros usuarios
+    await initBD();
+    if(bd&&!bd.usuarios[key]){
+      bd.usuarios[key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
+      await guardarBD({["usuarios."+key]: bd.usuarios[key]});
+    }
   }
   renderApp();
 }
