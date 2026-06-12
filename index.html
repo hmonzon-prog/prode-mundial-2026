@@ -956,7 +956,7 @@ function renderRanking(reales,hayReales,esAdmin){
     <h4>👥 Participantes (${allUsers.length})</h4>
     <div class="participantes-grid">${allUsers.map(([k,u])=>{
       const ok=u.resultados&&u.resultados.length>0;
-      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${k}')">${u.nombre} ${u.apellido}</span>`:`${u.nombre} ${u.apellido}`}${esAdmin&&ok?` <span style="cursor:pointer;color:#059669;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
+      return `<span class="part${ok?' ok':''}">${ok?'✅':'⏳'} ${esAdmin?`<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="editarUsuario('${k}')">${u.nombre} ${u.apellido}</span>`:`${u.nombre} ${u.apellido}`}${esAdmin&&!ok?` <span style="cursor:pointer;color:#ef4444;font-size:.7rem;text-decoration:underline" onclick="eliminarUsuario('${k}')">Eliminar</span>`:''}${esAdmin&&ok?` <span style="cursor:pointer;color:#059669;font-size:.7rem;text-decoration:underline" onclick="descargarPDF('${k}')">PDF</span>`:''}</span>`;
     }).join("")}</div>
   </div>`;
 
@@ -1084,6 +1084,15 @@ function renderEliminatoria(resultados,reales,hayReales,bloqueado,koBloqueado,ed
 function editarUsuario(key){
   EDITANDO_KEY=key;
   sessionStorage.setItem("prode_tab","prode");
+  renderApp();
+}
+
+async function eliminarUsuario(key){
+  const u=bd.usuarios[key];
+  if(!u)return;
+  if(!confirm(`¿Eliminar a ${u.nombre} ${u.apellido}? No tiene predicciones guardadas.`))return;
+  delete bd.usuarios[key];
+  await guardarBD();
   renderApp();
 }
 
