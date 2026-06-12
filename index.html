@@ -390,6 +390,10 @@ function doLogin(){
   USUARIO={nombre:nom,apellido:ape,key:nom.toLowerCase()+"_"+ape.toLowerCase()};
   ADMIN_MODE=false;
   sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
+  if(bd&&!bd.usuarios[USUARIO.key]){
+    bd.usuarios[USUARIO.key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
+    guardarBD();
+  }
   renderApp();
 }
 
