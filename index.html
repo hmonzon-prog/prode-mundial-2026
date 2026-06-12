@@ -706,7 +706,8 @@ function renderApp(){
     </div>`;
   }else if(ADMIN_MODE){
     html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button>
-    <button class="btn-sec" onclick="importarClaudio()">📥 Importar Claudio</button></div>`;
+    <button class="btn-sec" onclick="importarClaudio()">📥 Claudio</button>
+    <button class="btn-sec" onclick="importarGaston()">📥 Gastón</button></div>`;
   }else if(bloqueado){
     html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
   }else if(!bloqueado){
@@ -858,6 +859,31 @@ async function importarClaudio(){
   await guardarBD();
   renderApp();
   alert("Claudio Lencina importado.");
+}
+
+async function importarGaston(){
+  const key="gaston_lobo";
+  if(bd.usuarios[key]&&bd.usuarios[key].resultados&&bd.usuarios[key].resultados.length>0){
+    if(!confirm("Gastón ya tiene predicciones. ¿Sobrescribir?"))return;
+  }
+  const r=new Array(72).fill(null);
+  r[0]=null;
+  r[1]={gl:2,gv:0};r[2]={gl:1,gv:1};r[3]={gl:2,gv:1};r[4]={gl:1,gv:2};r[5]={gl:0,gv:1};
+  r[6]={gl:2,gv:0};r[7]={gl:0,gv:2};r[8]={gl:2,gv:0};r[9]={gl:2,gv:1};r[10]={gl:1,gv:1};r[11]={gl:0,gv:1};
+  r[12]={gl:2,gv:1};r[13]={gl:0,gv:1};r[14]={gl:0,gv:2};r[15]={gl:2,gv:0};r[16]={gl:1,gv:3};r[17]={gl:1,gv:1};
+  r[18]={gl:1,gv:2};r[19]={gl:1,gv:3};r[20]={gl:0,gv:1};r[21]={gl:1,gv:1};r[22]={gl:2,gv:1};r[23]={gl:2,gv:1};
+  r[24]={gl:3,gv:0};r[25]={gl:0,gv:2};r[26]={gl:2,gv:1};r[27]={gl:2,gv:2};r[28]={gl:1,gv:0};r[29]={gl:1,gv:3};
+  r[30]={gl:2,gv:0};r[31]={gl:1,gv:0};r[32]={gl:2,gv:1};r[33]={gl:1,gv:1};r[34]={gl:0,gv:1};r[35]={gl:1,gv:2};
+  r[36]={gl:2,gv:1};r[37]={gl:1,gv:0};r[38]={gl:2,gv:0};r[39]={gl:1,gv:2};r[40]={gl:1,gv:1};r[41]={gl:0,gv:2};
+  r[42]={gl:3,gv:0};r[43]={gl:1,gv:2};r[44]={gl:2,gv:0};r[45]={gl:3,gv:1};r[46]={gl:0,gv:1};r[47]={gl:1,gv:2};
+  r[48]={gl:3,gv:0};r[49]={gl:1,gv:3};r[50]={gl:2,gv:0};r[51]={gl:2,gv:1};r[52]={gl:1,gv:2};r[53]={gl:0,gv:1};
+  r[54]={gl:2,gv:0};r[55]={gl:1,gv:2};r[56]={gl:1,gv:0};r[57]={gl:1,gv:1};r[58]={gl:0,gv:1};r[59]={gl:1,gv:3};
+  r[60]={gl:3,gv:0};r[61]={gl:0,gv:2};r[62]={gl:2,gv:0};r[63]={gl:1,gv:0};r[64]={gl:1,gv:2};r[65]={gl:0,gv:0};
+  r[66]={gl:2,gv:1};r[67]={gl:0,gv:1};r[68]={gl:3,gv:1};r[69]={gl:0,gv:3};r[70]={gl:0,gv:2};r[71]={gl:1,gv:0};
+  bd.usuarios[key]={nombre:"Gaston",apellido:"Lobo",fecha:new Date().toLocaleString("es-AR"),resultados:r,campeon:"Portugal",goleador:"Kylian Mbappé"};
+  await guardarBD();
+  renderApp();
+  alert("Gaston Lobo importado.");
 }
 
 async function guardarResultadosAdmin(){
