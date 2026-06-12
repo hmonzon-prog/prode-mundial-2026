@@ -479,7 +479,7 @@ function calcularPts(pred,real){
   return 0;
 }
 
-function calcularPts(pred,real){
+function calcularTabla(grupo,resultados){
   const pts=PARTIDOS.map((p,i)=>({...p,i})).filter(p=>p.grupo===grupo);
   const eq={};
   for(const p of pts){if(!eq[p.local])eq[p.local]={pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};if(!eq[p.visit])eq[p.visit]={pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};}
