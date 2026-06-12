@@ -118,6 +118,7 @@ header .btn-admin.admin-activo{border-color:#d29922;color:#d29922}
 .participantes-grid .part.ok{color:#059669}
 .loading{text-align:center;padding:60px 20px;color:#6b7280}
 .loading .spinner{width:32px;height:32px;border-width:3px;display:block;margin:16px auto}
+#drop-zone:hover{border-color:#2563eb!important;background:#f8faff!important}
 .extra-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:end}
 .extra-box .eb-item{flex:1;min-width:160px}
 .extra-box label{display:block;font-size:.72rem;color:#6b7280;margin-bottom:3px;font-weight:500}
@@ -715,8 +716,14 @@ function renderApp(){
     html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button>
     ${bd.usuarios["claudio_lencina"]&&bd.usuarios["claudio_lencina"].resultados&&bd.usuarios["claudio_lencina"].resultados.length>0?'':`<button class="btn-sec" onclick="importarClaudio()">📥 Claudio</button>`}
     ${bd.usuarios["gaston_lobo"]&&bd.usuarios["gaston_lobo"].resultados&&bd.usuarios["gaston_lobo"].resultados.length>0?'':`<button class="btn-sec" onclick="importarGaston()">📥 Gastón</button>`}
-    ${bd.usuarios["brian_trinidad"]&&bd.usuarios["brian_trinidad"].resultados&&bd.usuarios["brian_trinidad"].resultados.length>0?'':`<button class="btn-sec" onclick="importarBrian()">📥 Brian</button>`}</div>`;
-  }else if(bloqueado){
+    ${bd.usuarios["brian_trinidad"]&&bd.usuarios["brian_trinidad"].resultados&&bd.usuarios["brian_trinidad"].resultados.length>0?'':`<button class="btn-sec" onclick="importarBrian()">📥 Brian</button>`}</div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb">
+      <h4 style="font-size:.9rem;color:#6b7280;margin:0 0 8px">📥 Restaurar usuario desde PDF</h4>
+      <div id="drop-zone" style="border:2px dashed #d1d5db;border-radius:10px;padding:24px;text-align:center;cursor:pointer;color:#6b7280;font-size:.82rem;transition:border-color .2s,background .2s" onclick="document.getElementById('pdf-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='#2563eb';this.style.background='#eff6ff'" ondragleave="this.style.borderColor='#d1d5db';this.style.background=''" ondrop="event.preventDefault();this.style.borderColor='#d1d5db';this.style.background='';subirPDF(event.dataTransfer.files[0])">Soltá el PDF acá o hacé clic para seleccionar
+        <input type="file" accept=".pdf" id="pdf-file-input" style="display:none" onchange="subirPDF(this.files[0])">
+      </div>
+      <div id="pdf-status" style="margin-top:6px"></div>
+    </div>`;  }else if(bloqueado){
     html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
   }else if(!bloqueado){
     html+=`<div class="acciones"><button onclick="guardarPrediccion()">🔒 Guardar Prediccion</button></div>`;
@@ -1329,7 +1336,7 @@ function generarPDF(key){
           const r=usr.resultados[ko.idx];
           if(!r)continue;
           const real=reales[ko.idx];
-          const pen=r.penal?`(pen)`:"";
+          const pen=r.penal?`(pen:${r.penal==="local"?ko.localEquipo:ko.visitEquipo})`:"";
           const full=`${ko.localEquipo}  vs  ${ko.visitEquipo}  ${r.gl}-${r.gv}${pen}`;
           doc.text(full,M,y);
           if(real)doc.text(`[${real.gl}-${real.gv}]`,105,y);
@@ -1410,7 +1417,7 @@ function imprimirPrediccion(key){
         const real=reales[ko.idx];
         const pts=acertadasPrint[mi]?calcularPtsKO(r,real):0;
         const fl=f.label.replace("vos","");
-        const pen=r.penal?"(pen)":"";
+        const pen=r.penal?`(pen:${r.penal==="local"?ko.localEquipo:ko.visitEquipo})`:"";
         h+=`<div class="m" style="font-size:10px"><span style="color:#666;min-width:50px">${f.key}</span><span>${ko.localEquipo} vs ${ko.visitEquipo}</span><span class="pred">${r.gl}-${r.gv}${pen}</span>${real?`<span style="color:#d29922;font-size:10px">[${real.gl}-${real.gv}]</span>`:''}<span class="pts">${pts!==null?pts+'p':''}</span></div>`;
       }
     }
@@ -1484,6 +1491,126 @@ function compartirRanking(){
   link.download=`ranking-prode-${new Date().toISOString().slice(0,10)}.png`;
   link.href=c.toDataURL("image/png");
   link.click();
+}
+
+let pdfjsLoaded = false;
+
+async function subirPDF(file){
+  const status=document.getElementById("pdf-status");
+  if(!file){status.innerHTML="";return}
+  if(file.type!=="application/pdf"){status.innerHTML=`<div class="msg warn">El archivo debe ser PDF.</div>`;return}
+  if(!pdfjsLoaded){
+    status.innerHTML=`<div class="spinner"></div> Cargando lector PDF...`;
+    try{
+      await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      pdfjsLoaded=true;
+    }catch(e){status.innerHTML=`<div class="msg warn">Error al cargar el lector PDF.</div>`;return}
+  }
+  status.innerHTML=`<div class="spinner"></div> Leyendo PDF...`;
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let text="";
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const c=await pg.getTextContent();
+      text+=c.items.map(it=>it.str).join(" ")+"\n";
+    }
+    const datos=parsearPDFText(text);
+    if(!datos){status.innerHTML=`<div class="msg warn">No se pudieron extraer las predicciones. ¿Es un PDF generado desde el Prode?</div>`;return}
+    mostrarConfirmacionRestauracion(datos);
+    status.innerHTML="";
+  }catch(e){status.innerHTML=`<div class="msg warn">Error al leer el PDF: ${e.message}</div>`}
+}
+
+function parsearPDFText(text){
+  const lines=text.split("\n").map(l=>l.replace(/\s+/g," ").trim()).filter(l=>l);
+  let nombre="",apellido="",campeon="",goleador="";
+  for(const line of lines){
+    let m=line.match(/^(.+?)\s*[—–-]\s+\d/);
+    if(m&&!nombre){
+      const p=m[1].trim().split(/\s+/);
+      if(p.length>=2){nombre=p[0];apellido=p.slice(1).join(" ");continue}
+    }
+    m=line.match(/Campeon:\s*(.+?)\s+Goleador:\s*(.+)/i);
+    if(m){campeon=m[1].trim();goleador=m[2].trim();continue}
+  }
+  if(!nombre)return null;
+  const res=new Array(152).fill(null);
+  const glookup={};
+  PARTIDOS.forEach((p,i)=>{glookup[p.local+"||"+p.visit]=i});
+  const bracket=resolverBracket(bd.reales||[]);
+  const kolookup={};
+  bracket.forEach((ko,i)=>{kolookup[ko.localEquipo+"||"+ko.visitEquipo]=72+i});
+  const allTeams=[...new Set(PARTIDOS.flatMap(p=>[p.local,p.visit]))];
+  for(const line of lines){
+    const m=line.match(/(.+?)\s+vs\s+(.+?)\s+(\d+)\s*[-–]\s*(\d+)/i);
+    if(!m)continue;
+    const loc=m[1].trim(),vis=m[2].trim(),gl=parseInt(m[3]),gv=parseInt(m[4]);
+    if(!allTeams.includes(loc)||!allTeams.includes(vis))continue;
+    const gk=loc+"||"+vis;
+    const gi=glookup[gk];
+    if(gi!==undefined){res[gi]={gl,gv};continue}
+    const ki=kolookup[gk];
+    if(ki!==undefined){
+      const obj={gl,gv};
+      const penMatch=line.match(/\(pen:\s*(.+?)\s*\)/);
+      if(penMatch){
+        const ganador=penMatch[1].trim();
+        if(ganador===loc)obj.penal="local";
+        else if(ganador===vis)obj.penal="visit";
+      }else if(line.includes("(pen)")){
+        if(gl>gv)obj.penal="local";
+        else if(gv>gl)obj.penal="visit";
+      }
+      res[ki]=obj;
+    }
+  }
+  return{nombre,apellido,campeon,goleador,resultados:res};
+}
+
+function mostrarConfirmacionRestauracion(d){
+  const overlay=document.createElement("div");
+  overlay.className="modal-overlay";
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  const key=normalizeKey(d.nombre+"_"+d.apellido);
+  const existe=bd.usuarios[key]?"(sobrescribe)":"(nuevo)";
+  const grupos=d.resultados.filter((r,i)=>i<72&&r!==null).length;
+  const ko=d.resultados.filter((r,i)=>i>=72&&r!==null).length;
+  overlay.innerHTML=`
+  <div id="modal-contenido" style="max-width:480px">
+    <button class="cerrar-modal" onclick="this.closest('.modal-overlay').remove()">✕</button>
+    <h3>📥 Restaurar usuario</h3>
+    <p><strong>${d.nombre} ${d.apellido}</strong> ${existe}</p>
+    <p>🏆 Campeón: ${d.campeon||"—"} &nbsp; ⚽ Goleador: ${d.goleador||"—"}</p>
+    <p>📋 Grupos: ${grupos}/72  🏆 Eliminatoria: ${ko}/${KO_PARTIDOS.length}</p>
+    <div class="acciones" style="margin-top:14px">
+      <button onclick="confirmarRestauracion('${key}')">✅ Restaurar</button>
+      <button class="btn-sec" onclick="this.closest('.modal-overlay').remove()">✕ Cancelar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay._datos=d;
+  overlay._key=key;
+}
+
+async function confirmarRestauracion(key){
+  const overlay=document.querySelector(".modal-overlay");
+  if(!overlay)return;
+  const d=overlay._datos;
+  const status=document.getElementById("pdf-status");
+  bd.usuarios[key]={
+    nombre:d.nombre,apellido:d.apellido,
+    fecha:new Date().toLocaleString("es-AR"),
+    resultados:d.resultados,
+    campeon:d.campeon||"",
+    goleador:d.goleador||""
+  };
+  await guardarBD({["usuarios."+key]: bd.usuarios[key]});
+  overlay.remove();
+  status.innerHTML=`<div class="msg ok">✅ ${d.nombre} ${d.apellido} restaurado correctamente.</div>`;
+  renderApp();
 }
 
 async function recargar(){
