@@ -398,7 +398,7 @@ async function doLogin(){
   sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
   if(bd&&!bd.usuarios[key]){
     bd.usuarios[key]={nombre:nom,apellido:ape,fecha:"-",resultados:[]};
-    await guardarBD({["usuarios."+key: bd.usuarios[key]});
+    await guardarBD({["usuarios."+key]: bd.usuarios[key]});
   }
   renderApp();
 }
@@ -792,7 +792,7 @@ async function guardarPrediccion(){
     nombre:USUARIO.nombre,apellido:USUARIO.apellido,
     fecha:new Date().toLocaleString("es-AR"),resultados,campeon,goleador
   };
-  await guardarBD({["usuarios."+USUARIO.key: bd.usuarios[USUARIO.key]});
+  await guardarBD({["usuarios."+USUARIO.key]: bd.usuarios[USUARIO.key]});
   renderApp();
   setTimeout(()=>descargarPDF(USUARIO.key),500);
 }
@@ -838,7 +838,7 @@ async function guardarEliminatoria(){
   if(!confirm("¿Guardar predicción de eliminatoria? Una vez guardada no se puede modificar."))return;
 
   bd.usuarios[USUARIO.key]={...usr,resultados,ko_guardado:true};
-  await guardarBD({["usuarios."+USUARIO.key: bd.usuarios[USUARIO.key]});
+  await guardarBD({["usuarios."+USUARIO.key]: bd.usuarios[USUARIO.key]});
   renderApp();
   setTimeout(()=>descargarPDF(USUARIO.key),500);
 }
@@ -862,7 +862,7 @@ async function importarClaudio(){
   r[60]={gl:3,gv:0};r[61]={gl:0,gv:3};r[62]={gl:2,gv:0};r[63]={gl:3,gv:0};r[64]={gl:1,gv:1};r[65]={gl:0,gv:1};
   r[66]={gl:2,gv:2};r[67]={gl:3,gv:0};r[68]={gl:1,gv:2};r[69]={gl:0,gv:2};r[70]={gl:0,gv:2};r[71]={gl:2,gv:1};
   bd.usuarios[key]={nombre:"Claudio",apellido:"Lencina",fecha:new Date().toLocaleString("es-AR"),resultados:r,campeon:"Argentina",goleador:"Mbape"};
-  await guardarBD({["usuarios."+key: bd.usuarios[key]});
+  await guardarBD({["usuarios."+key]: bd.usuarios[key]});
   renderApp();
   alert("Claudio Lencina importado.");
 }
@@ -887,7 +887,7 @@ async function importarGaston(){
   r[60]={gl:3,gv:0};r[61]={gl:0,gv:2};r[62]={gl:2,gv:0};r[63]={gl:1,gv:0};r[64]={gl:1,gv:2};r[65]={gl:0,gv:0};
   r[66]={gl:2,gv:1};r[67]={gl:0,gv:1};r[68]={gl:3,gv:1};r[69]={gl:0,gv:3};r[70]={gl:0,gv:2};r[71]={gl:1,gv:0};
   bd.usuarios[key]={nombre:"Gaston",apellido:"Lobo",fecha:new Date().toLocaleString("es-AR"),resultados:r,campeon:"Portugal",goleador:"Kylian Mbappé"};
-  await guardarBD({["usuarios."+key: bd.usuarios[key]});
+  await guardarBD({["usuarios."+key]: bd.usuarios[key]});
   renderApp();
   alert("Gaston Lobo importado.");
 }
@@ -1201,7 +1201,7 @@ async function guardarEdicionUsuario(){
   const goleadorVal=goleador?goleador.value.trim():(u.goleador||"");
   if(!confirm(`Guardar predicción para ${u.nombre} ${u.apellido}?`))return;
   bd.usuarios[EDITANDO_KEY]={nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados,campeon:campeonVal,goleador:goleadorVal,ko_guardado:u.ko_guardado||false};
-  await guardarBD({["usuarios."+EDITANDO_KEY: bd.usuarios[EDITANDO_KEY]});
+  await guardarBD({["usuarios."+EDITANDO_KEY]: bd.usuarios[EDITANDO_KEY]});
   EDITANDO_KEY=null;
   renderApp();
 }
