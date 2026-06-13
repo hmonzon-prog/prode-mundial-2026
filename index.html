@@ -1112,7 +1112,7 @@ body::before {
     const SESSION_KEY = "prode2026_sesion";
 
     // === ESTADO GLOBAL ===
-    let bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
+    let bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
     let USUARIO = null;
     let ADMIN_MODE = false;
     let EDITANDO_KEY = null;
@@ -1129,10 +1129,11 @@ body::before {
             campeon_real: d.campeon_real || "",
             goleador_real: d.goleador_real || "",
             admin_email: d.admin_email || "",
-            scoring_active: d.scoring_active || false
+            scoring_active: d.scoring_active || false,
+            scoring_start: d.scoring_start || "13/6"
           };
         } else {
-          bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
+          bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
         }
         
         const usersSnap = await DB.collection("usuarios").get();
@@ -1141,7 +1142,7 @@ body::before {
         });
       }catch(e){
         console.error("Error al inicializar base de datos:", e);
-        bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
+        bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
       }
     }
 
@@ -1149,13 +1150,14 @@ body::before {
       if(!bd) return;
       if(!updates){console.warn("guardarBD sin updates - ignorado");return}
       try{
-        if ("reales" in updates || "campeon_real" in updates || "goleador_real" in updates || "scoring_active" in updates) {
+        if ("reales" in updates || "campeon_real" in updates || "goleador_real" in updates || "scoring_active" in updates || "scoring_start" in updates) {
           await DB.collection("config").doc("real").set({
             reales: bd.reales || [],
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
             admin_email: bd.admin_email || "",
-            scoring_active: bd.scoring_active || false
+            scoring_active: bd.scoring_active || false,
+            scoring_start: bd.scoring_start || "13/6"
           });
         }
         
@@ -1165,7 +1167,8 @@ body::before {
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
             admin_email: updates.admin_email,
-            scoring_active: bd.scoring_active || false
+            scoring_active: bd.scoring_active || false,
+            scoring_start: bd.scoring_start || "13/6"
           }, { merge: true });
         }
 
@@ -1349,8 +1352,13 @@ body::before {
       return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9_]/g,"");
     }
 
-    function calcularPts(pred,real){
+    function calcularPts(pred, real, fecha){
       if(!pred||!real||real.gl===undefined||real.gv===undefined)return null;
+      if(fecha&&bd.scoring_start){
+        const[d1,m1]=fecha.split('/').map(Number);
+        const[d2,m2]=bd.scoring_start.split('/').map(Number);
+        if(m1<m2||(m1===m2&&d1<d2))return null;
+      }
       if(pred.gl===real.gl&&pred.gv===real.gv)return 3;
       const dPred=Math.sign(pred.gl-pred.gv);
       const dReal=Math.sign(real.gl-real.gv);
@@ -1526,7 +1534,7 @@ body::before {
             val={gl:"",gv:""};
           }
           const predUsr=data?data.resultados[p.idx]:null;
-          const ptsG=calcularPts(predUsr,r);
+          const ptsG=calcularPts(predUsr,r,p.fecha);
           const editable=!bloqueado||ADMIN_MODE;
           html+=`<div class="partido${cerrado?' cerrado':''}">
             ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
@@ -1616,7 +1624,7 @@ body::before {
         const p=PARTIDOS[i];
         const r=resultados[i];
         const real=reales?reales[i]:null;
-        const pts=calcularPts(r,real);
+        const pts=calcularPts(r,real,p.fecha);
         if(p.grupo!==lastGrp){lastGrp=p.grupo;gi=0;html+=`<tr><td colspan="${hayReales?(bd.scoring_active?7:6):5}" style="padding:5px 5px 2px;color:var(--primary);font-weight:600;font-size:.8rem">Grupo ${p.grupo}</td></tr>`}
         if(gi%2===0){
           const numF=Math.floor(gi/2)+1;
@@ -1634,7 +1642,7 @@ body::before {
         gi++;
       }
       if(hayReales&&bd.scoring_active){
-        const total=resultados.slice(0,PARTIDOS.length).reduce((s,r,i)=>{const p=calcularPts(r,reales[i]);return s+(p||0);},0);
+        const total=resultados.slice(0,PARTIDOS.length).reduce((s,r,i)=>{const p=calcularPts(r,reales[i],PARTIDOS[i].fecha);return s+(p||0);},0);
         html+=`<tr><td colspan="6" style="padding:6px 5px;text-align:right;font-weight:600;font-size:.85rem">TOTAL GRUPOS:</td>
           <td style="padding:6px 5px;text-align:center;color:var(--primary);font-weight:700;font-size:1rem">${total} pts</td></tr>`;
       }
@@ -1661,7 +1669,7 @@ body::before {
         if(!usr.resultados||usr.resultados.length===0)return null;
         let pts=0,p3=0,p1=0;
         for(let i=0;i<PARTIDOS.length;i++){
-          const p=calcularPts(usr.resultados[i],reales[i]);
+          const p=calcularPts(usr.resultados[i],reales[i],PARTIDOS[i].fecha);
           if(p===3)p3++;else if(p===1)p1++;
           if(p)pts+=p;
         }
@@ -1815,7 +1823,7 @@ body::before {
           const r=usr.resultados[m.i];
           const score=r?`${r.gl}-${r.gv}`:"?-?";
           const real=reales[m.i];
-          const pts=calcularPts(r,real);
+          const pts=calcularPts(r,real,m.fecha);
 
           doc.setFont("helvetica","normal");
           doc.setFontSize(7);
@@ -1858,7 +1866,7 @@ body::before {
         if(!usr.resultados||usr.resultados.length===0)return null;
         let pts=0,p3=0,p1=0;
         for(let i=0;i<PARTIDOS.length;i++){
-          const p=calcularPts(usr.resultados[i],reales[i]);
+          const p=calcularPts(usr.resultados[i],reales[i],PARTIDOS[i].fecha);
           if(p===3)p3++;else if(p===1)p1++;
           if(p)pts+=p;
         }
