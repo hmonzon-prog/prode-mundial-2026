@@ -1439,7 +1439,7 @@ body::before {
         </div>
       </header>`;
 
-      const tabs=[{id:"prode",label:"📋 Mi Prode"},{id:"ranking",label:"🏆 Ranking"}];
+      const tabs=[{id:"prode",label:"📋 Mi Prode"}];
       html+=`<div class="tabs">`;
       for(const t of tabs) html+=`<div class="tab${tab===t.id?' activo':''}" onclick="cambiarTab('${t.id}')">${t.label}</div>`;
       html+=`</div>`;
@@ -1465,14 +1465,14 @@ body::before {
       html+=`<div class="extra-box">
         ${ADMIN_MODE&&!EDITANDO_KEY?'':`
         <div class="eb-item">
-          <label>🏆 Campeón <span class="pts-extra">(+10 pts)</span></label>
+          <label>🏆 Campeón</label>
           <select id="inp-campeon">
             <option value="">🏆 Seleccionar 🏆</option>
             ${EQUIPOS.map(e=>`<option value="${e}"${campeonVal===e?' selected':''}>${e}</option>`).join("")}
           </select>
         </div>
         <div class="eb-item">
-          <label>⚽ Goleador <span class="pts-extra">(+5 pts)</span></label>
+          <label>⚽ Goleador</label>
           <input type="text" id="inp-goleador" placeholder="Ej: Lionel Messi" value="${goleadorVal}">
         </div>`}
         ${ADMIN_MODE&&!EDITANDO_KEY?`
@@ -1503,7 +1503,6 @@ body::before {
             const numF=Math.floor(gi/2)+1;
             html+=`<div style="font-size:.72rem;color:#94a3b8;padding:6px 0 2px;font-weight:600;letter-spacing:.5px;text-align:center">Fecha ${numF}</div>`;
           }
-          const r=reales[p.idx]||{};
           const cerrado=reales[p.idx]&&reales[p.idx].gl!==undefined&&!(ADMIN_MODE&&!EDITANDO_KEY);
           let val;
           if(ADMIN_MODE&&EDITANDO_KEY){
@@ -1517,7 +1516,6 @@ body::before {
             val={gl:"",gv:""};
           }
           const predUsr=data?data.resultados[p.idx]:null;
-          const ptsG=calcularPts(predUsr,r);
           const editable=!bloqueado||ADMIN_MODE;
           html+=`<div class="partido${cerrado?' cerrado':''}">
             ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
@@ -1542,7 +1540,6 @@ body::before {
                 ${p.visit}
               </div>
             </div>
-            ${!cerrado&&ptsG!==null?`<div style="margin-top:10px;"><span class="pts-badge pts-${ptsG}">${ptsG}p</span></div>`:''}
           </div>`;
         }
         html+=`</div></div>`;
@@ -1574,9 +1571,7 @@ body::before {
 
       html+=`</div>`;
 
-      html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking">`;
-      html+=renderRanking(reales,hayReales,ADMIN_MODE);
-      html+=`</div>`;
+      html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking" style="display:none"></div>`;
 
       document.getElementById("app").innerHTML=html;
     }
@@ -1598,18 +1593,17 @@ body::before {
             <th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted)"></th>
             <th style="text-align:left;padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted)">Visitante</th>
             <th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Pred</th>
-            ${hayReales?'<th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Real</th><th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Pts</th>':''}
+            ${hayReales?'<th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Real</th>':''}
           </tr>`;
       let lastGrp=null,gi=0;
       for(let i=0;i<PARTIDOS.length;i++){
         const p=PARTIDOS[i];
         const r=resultados[i];
         const real=reales?reales[i]:null;
-        const pts=calcularPts(r,real);
-        if(p.grupo!==lastGrp){lastGrp=p.grupo;gi=0;html+=`<tr><td colspan="${hayReales?7:5}" style="padding:5px 5px 2px;color:var(--primary);font-weight:600;font-size:.8rem">Grupo ${p.grupo}</td></tr>`}
+        if(p.grupo!==lastGrp){lastGrp=p.grupo;gi=0;html+=`<tr><td colspan="${hayReales?6:5}" style="padding:5px 5px 2px;color:var(--primary);font-weight:600;font-size:.8rem">Grupo ${p.grupo}</td></tr>`}
         if(gi%2===0){
           const numF=Math.floor(gi/2)+1;
-          html+=`<tr><td colspan="${hayReales?7:5}" style="padding:4px 5px 1px;color:var(--text-muted);font-size:.68rem;font-weight:500;letter-spacing:.5px">Fecha ${numF}</td></tr>`;
+          html+=`<tr><td colspan="${hayReales?6:5}" style="padding:4px 5px 1px;color:var(--text-muted);font-size:.68rem;font-weight:500;letter-spacing:.5px">Fecha ${numF}</td></tr>`;
         }
         html+=`<tr>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--text-muted)">${i+1}</td>
@@ -1617,15 +1611,9 @@ body::before {
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--text-muted)">vs</td>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05)">${p.visit}</td>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;font-weight:600">${r?r.gl:'?'}-${r?r.gv:'?'}</td>
-          ${hayReales?`<td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;color:var(--accent);font-weight:600">${real!==null&&real!==undefined?real.gl+' - '+real.gv:'-'}</td>
-          <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center">${pts!==null?`<span class="pts-badge pts-${pts}">${pts}</span>`:'-'}</td>`:''}
+          ${hayReales?`<td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;color:var(--accent);font-weight:600">${real!==null&&real!==undefined?real.gl+' - '+real.gv:'-'}</td>`:''}
         </tr>`;
         gi++;
-      }
-      if(hayReales){
-        const total=resultados.slice(0,PARTIDOS.length).reduce((s,r,i)=>{const p=calcularPts(r,reales[i]);return s+(p||0);},0);
-        html+=`<tr><td colspan="${hayReales?6:4}" style="padding:6px 5px;text-align:right;font-weight:600;font-size:.85rem">TOTAL GRUPOS:</td>
-          <td style="padding:6px 5px;text-align:center;color:var(--primary);font-weight:700;font-size:1rem">${total} pts</td></tr>`;
       }
       html+=`</table></div>`;
       return html;
