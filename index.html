@@ -1112,7 +1112,7 @@ body::before {
     const SESSION_KEY = "prode2026_sesion";
 
     // === ESTADO GLOBAL ===
-    let bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "" };
+    let bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
     let USUARIO = null;
     let ADMIN_MODE = false;
     let EDITANDO_KEY = null;
@@ -1128,10 +1128,11 @@ body::before {
             reales: d.reales || [],
             campeon_real: d.campeon_real || "",
             goleador_real: d.goleador_real || "",
-            admin_email: d.admin_email || ""
+            admin_email: d.admin_email || "",
+            scoring_active: d.scoring_active || false
           };
         } else {
-          bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "" };
+          bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
         }
         
         const usersSnap = await DB.collection("usuarios").get();
@@ -1140,7 +1141,7 @@ body::before {
         });
       }catch(e){
         console.error("Error al inicializar base de datos:", e);
-        bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "" };
+        bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false };
       }
     }
 
@@ -1148,12 +1149,13 @@ body::before {
       if(!bd) return;
       if(!updates){console.warn("guardarBD sin updates - ignorado");return}
       try{
-        if ("reales" in updates || "campeon_real" in updates || "goleador_real" in updates) {
+        if ("reales" in updates || "campeon_real" in updates || "goleador_real" in updates || "scoring_active" in updates) {
           await DB.collection("config").doc("real").set({
             reales: bd.reales || [],
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
-            admin_email: bd.admin_email || ""
+            admin_email: bd.admin_email || "",
+            scoring_active: bd.scoring_active || false
           });
         }
         
@@ -1162,7 +1164,8 @@ body::before {
             reales: bd.reales || [],
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
-            admin_email: updates.admin_email
+            admin_email: updates.admin_email,
+            scoring_active: bd.scoring_active || false
           }, { merge: true });
         }
 
@@ -1416,6 +1419,12 @@ body::before {
       renderApp();
     }
 
+    async function toggleScoring(){
+      bd.scoring_active=!bd.scoring_active;
+      await guardarBD({scoring_active:bd.scoring_active});
+      renderApp();
+    }
+
     // === RENDER FUNCTIONS ===
     function renderApp(){
       const tab=sessionStorage.getItem("prode_tab")||"prode";
@@ -1439,7 +1448,7 @@ body::before {
         </div>
       </header>`;
 
-      const tabs=[{id:"prode",label:"📋 Mi Prode"}];
+      const tabs=[{id:"prode",label:"📋 Mi Prode"},{id:"ranking",label:"🏆 Ranking"}];
       html+=`<div class="tabs">`;
       for(const t of tabs) html+=`<div class="tab${tab===t.id?' activo':''}" onclick="cambiarTab('${t.id}')">${t.label}</div>`;
       html+=`</div>`;
@@ -1465,14 +1474,14 @@ body::before {
       html+=`<div class="extra-box">
         ${ADMIN_MODE&&!EDITANDO_KEY?'':`
         <div class="eb-item">
-          <label>🏆 Campeón</label>
+          <label>🏆 Campeón <span class="pts-extra">(+10 pts)</span></label>
           <select id="inp-campeon">
             <option value="">🏆 Seleccionar 🏆</option>
             ${EQUIPOS.map(e=>`<option value="${e}"${campeonVal===e?' selected':''}>${e}</option>`).join("")}
           </select>
         </div>
         <div class="eb-item">
-          <label>⚽ Goleador</label>
+          <label>⚽ Goleador <span class="pts-extra">(+5 pts)</span></label>
           <input type="text" id="inp-goleador" placeholder="Ej: Lionel Messi" value="${goleadorVal}">
         </div>`}
         ${ADMIN_MODE&&!EDITANDO_KEY?`
@@ -1517,6 +1526,7 @@ body::before {
             val={gl:"",gv:""};
           }
           const predUsr=data?data.resultados[p.idx]:null;
+          const ptsG=calcularPts(predUsr,r);
           const editable=!bloqueado||ADMIN_MODE;
           html+=`<div class="partido${cerrado?' cerrado':''}">
             ${cerrado?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
@@ -1541,6 +1551,7 @@ body::before {
                 ${p.visit}
               </div>
             </div>
+            ${!cerrado&&ptsG!==null&&bd.scoring_active?`<div style="margin-top:10px;"><span class="pts-badge pts-${ptsG}">${ptsG}p</span></div>`:''}
           </div>`;
         }
         html+=`</div></div>`;
@@ -1554,7 +1565,9 @@ body::before {
           <button class="btn-sec" onclick="cancelarEdicion()">✕ Cancelar</button>
         </div>`;
       }else if(ADMIN_MODE){
-        html+=`<div class="acciones"><button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button></div>
+        const btnLabel=bd.scoring_active?"🔴 Desactivar puntuación":"🟢 Activar puntuación";
+        html+=`<div class="acciones"><button onclick="toggleScoring()">${btnLabel}</button>
+        <button onclick="guardarResultadosAdmin()">💾 Guardar Resultados Reales</button></div>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)">
           <h4 style="font-size:.9rem;color:var(--text-muted);margin:0 0 8px">📄 Restaurar usuario desde PDF</h4>
           <div id="drop-zone" style="border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:.82rem;" onclick="document.getElementById('pdf-file-input').click()" ondragover="event.preventDefault();" ondrop="event.preventDefault();subirPDF(event.dataTransfer.files[0])">Soltá el PDF acá o hacé clic para seleccionar
@@ -1572,7 +1585,9 @@ body::before {
 
       html+=`</div>`;
 
-      html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking" style="display:none"></div>`;
+      html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking">`;
+      html+=renderRanking(reales,hayReales,ADMIN_MODE);
+      html+=`</div>`;
 
       document.getElementById("app").innerHTML=html;
     }
@@ -1594,17 +1609,18 @@ body::before {
             <th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted)"></th>
             <th style="text-align:left;padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted)">Visitante</th>
             <th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Pred</th>
-            ${hayReales?'<th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Real</th>':''}
+            ${hayReales?'<th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Real</th>':''}${hayReales&&bd.scoring_active?'<th style="padding:3px 5px;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center">Pts</th>':''}
           </tr>`;
       let lastGrp=null,gi=0;
       for(let i=0;i<PARTIDOS.length;i++){
         const p=PARTIDOS[i];
         const r=resultados[i];
         const real=reales?reales[i]:null;
-        if(p.grupo!==lastGrp){lastGrp=p.grupo;gi=0;html+=`<tr><td colspan="${hayReales?6:5}" style="padding:5px 5px 2px;color:var(--primary);font-weight:600;font-size:.8rem">Grupo ${p.grupo}</td></tr>`}
+        const pts=calcularPts(r,real);
+        if(p.grupo!==lastGrp){lastGrp=p.grupo;gi=0;html+=`<tr><td colspan="${hayReales?(bd.scoring_active?7:6):5}" style="padding:5px 5px 2px;color:var(--primary);font-weight:600;font-size:.8rem">Grupo ${p.grupo}</td></tr>`}
         if(gi%2===0){
           const numF=Math.floor(gi/2)+1;
-          html+=`<tr><td colspan="${hayReales?6:5}" style="padding:4px 5px 1px;color:var(--text-muted);font-size:.68rem;font-weight:500;letter-spacing:.5px">Fecha ${numF}</td></tr>`;
+          html+=`<tr><td colspan="${hayReales?(bd.scoring_active?7:6):5}" style="padding:4px 5px 1px;color:var(--text-muted);font-size:.68rem;font-weight:500;letter-spacing:.5px">Fecha ${numF}</td></tr>`;
         }
         html+=`<tr>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--text-muted)">${i+1}</td>
@@ -1612,9 +1628,15 @@ body::before {
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--text-muted)">vs</td>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05)">${p.visit}</td>
           <td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;font-weight:600">${r?r.gl:'?'}-${r?r.gv:'?'}</td>
-          ${hayReales?`<td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;color:var(--accent);font-weight:600">${real!==null&&real!==undefined?real.gl+' - '+real.gv:'-'}</td>`:''}
+          ${hayReales?`<td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;color:var(--accent);font-weight:600">${real!==null&&real!==undefined?real.gl+' - '+real.gv:'-'}</td>
+          ${bd.scoring_active?`<td style="padding:2px 5px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center">${pts!==null?`<span class="pts-badge pts-${pts}">${pts}</span>`:'-'}</td>`:''}`:''}
         </tr>`;
         gi++;
+      }
+      if(hayReales&&bd.scoring_active){
+        const total=resultados.slice(0,PARTIDOS.length).reduce((s,r,i)=>{const p=calcularPts(r,reales[i]);return s+(p||0);},0);
+        html+=`<tr><td colspan="6" style="padding:6px 5px;text-align:right;font-weight:600;font-size:.85rem">TOTAL GRUPOS:</td>
+          <td style="padding:6px 5px;text-align:center;color:var(--primary);font-weight:700;font-size:1rem">${total} pts</td></tr>`;
       }
       html+=`</table></div>`;
       return html;
@@ -1662,15 +1684,21 @@ body::before {
         const p0=f.total-f.p3-f.p1;
         const maxPts=f.total*3;
         const efect=maxPts>0?((f.pts/maxPts)*100).toFixed(1):"0.0";
+        const dp=bd.scoring_active?f.pts:0;
+        const d3=bd.scoring_active?f.p3:0;
+        const d1=bd.scoring_active?f.p1:0;
+        const d0=bd.scoring_active?p0:f.total;
+        const de=bd.scoring_active?efect:"0.0";
+        const db=bd.scoring_active?(f.bonus>0?'+'+f.bonus:'-'):'-';
         html+=`<tr>
           <td class="pos ${i<3?`pos-${i+1}`:''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
           <td class="nombre">${esAdmin?`<span style="cursor:pointer;color:var(--primary);text-decoration:underline" onclick="editarUsuario('${f.key}')">${f.nombre} ${f.apellido}</span>`:`${f.nombre} ${f.apellido}`}</td>
-          <td class="pts-total">${f.pts}</td>
-          <td style="text-align:center;color:var(--success);font-weight:600">${f.p3}</td>
-          <td style="text-align:center;color:var(--accent);font-weight:600">${f.p1}</td>
-          <td style="text-align:center;color:var(--text-muted)">${p0}</td>
-          <td style="text-align:center;color:var(--text-muted)">${efect}%</td>
-          ${hayBonus?`<td style="text-align:center;color:var(--accent);font-weight:600;font-size:.8rem">${f.bonus>0?'+'+f.bonus:'-'}</td>`:''}
+          <td class="pts-total">${dp}</td>
+          <td style="text-align:center;color:var(--success);font-weight:600">${d3}</td>
+          <td style="text-align:center;color:var(--accent);font-weight:600">${d1}</td>
+          <td style="text-align:center;color:var(--text-muted)">${d0}</td>
+          <td style="text-align:center;color:var(--text-muted)">${de}%</td>
+          ${hayBonus?`<td style="text-align:center;color:var(--accent);font-weight:600;font-size:.8rem">${db}</td>`:''}
           ${esAdmin?`<td style="text-align:center"><span style="cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;margin-right:6px" onclick="editarUsuario('${f.key}')">Editar</span><span style="cursor:pointer;color:var(--primary);font-size:.75rem;text-decoration:underline" onclick="descargarPDF('${f.key}')">📄 PDF</span></td>`:''}
         </tr>`;
       }
@@ -1869,8 +1897,15 @@ body::before {
         const f=filas[i];
         const y=88+i*rowH;
         if(i%2===1){ctx.fillStyle="#f9fafb";ctx.fillRect(10,y-6,W-20,rowH);ctx.fillStyle="#374151"}else{ctx.fillStyle="#374151"}
-        const vals=[i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1,f.nombre,f.pts,f.p3,f.p1,f.p0,f.efect+"%"];
-        if(hayBonus)vals.push(f.bonus>0?"+"+f.bonus:"-");
+        const dp2=bd.scoring_active?f.pts:0;
+        const d32=bd.scoring_active?f.p3:0;
+        const d12=bd.scoring_active?f.p1:0;
+        const totalM=f.p3+f.p1+f.p0;
+        const d02=bd.scoring_active?f.p0:totalM;
+        const de2=bd.scoring_active?f.efect:"0.0";
+        const db2=bd.scoring_active?(f.bonus>0?"+"+f.bonus:"-"):"-";
+        const vals=[i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1,f.nombre,dp2,d32,d12,d02,de2+"%"];
+        if(hayBonus)vals.push(db2);
         ctx.font="12px -apple-system,sans-serif";
         vals.forEach((v,j)=>{
           ctx.textAlign=cols[j].align;
