@@ -1531,7 +1531,7 @@ body::before {
             html+=`<div style="font-size:.72rem;color:#94a3b8;padding:6px 0 2px;font-weight:600;letter-spacing:.5px;text-align:center">Fecha ${numF}</div>`;
           }
           const r=reales[p.idx]||{};
-          const cerrado=reales[p.idx]&&reales[p.idx].gl!==undefined&&!(ADMIN_MODE&&!EDITANDO_KEY);
+          const cerrado=reales[p.idx]&&reales[p.idx].gl!==undefined&&!ADMIN_MODE;
           let val;
           if(ADMIN_MODE&&EDITANDO_KEY){
             const uData = bd.usuarios[EDITANDO_KEY];
