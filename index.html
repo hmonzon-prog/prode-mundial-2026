@@ -349,6 +349,37 @@
       display: block;
     }
     
+    /* === FILTER PILLS === */
+    .filtros {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      padding: 4px 0;
+    }
+    .filtro-pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      transition: all .15s;
+      user-select: none;
+      white-space: nowrap;
+      background: transparent;
+    }
+    .filtro-pill:hover {
+      border-color: var(--primary);
+      color: var(--text-main);
+    }
+    .filtro-pill.activo {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    
     /* === GROUPS & MATCHES === */
     .grupo {
       margin-bottom: 16px;
@@ -1379,7 +1410,12 @@ body::before {
     function cambiarTab(t){
       sessionStorage.setItem("prode_tab",t);
       renderApp();
-    }    async function guardarPrediccion(){
+    }
+    function cambiarFiltro(f){
+      sessionStorage.setItem("prode_filtro",f);
+      renderApp();
+    }
+    async function guardarPrediccion(){
       const inputs=document.querySelectorAll(".inp-gl");
       const resultados=new Array(72).fill(null);
 
@@ -1450,6 +1486,10 @@ body::before {
       const reales=bd.reales||[];
       const hayReales=reales.filter(r=>r!==null).length>0;
       const bloqueado=data&&data.resultados&&data.resultados.length>0;
+      const hoy=new Date();
+      const hoyStr=`${hoy.getDate()}/${hoy.getMonth()+1}`;
+      const filtro=sessionStorage.getItem("prode_filtro")||"todas";
+      const fechas=[...new Set(PARTIDOS.map(p=>p.fecha))].sort((a,b)=>{const[d1,m1]=a.split('/').map(Number);const[d2,m2]=b.split('/').map(Number);return m1-m2||d1-d2});
 
       let html=`<header>
         <div class="hl">
@@ -1516,19 +1556,29 @@ body::before {
         </div>`:''}
       </div>`;
 
+      html+=`<div class="filtros">
+        <span class="filtro-pill${filtro==='todas'?' activo':''}" onclick="cambiarFiltro('todas')">Todas</span>
+        <span class="filtro-pill${filtro==='hoy'?' activo':''}" onclick="cambiarFiltro('hoy')">Hoy</span>
+        ${fechas.map(f=>`<span class="filtro-pill${filtro==='fecha:'+f?' activo':''}" onclick="cambiarFiltro('fecha:${f}')">${f}</span>`).join('')}
+        ${GRUPOS.map(g=>`<span class="filtro-pill${filtro==='grupo:'+g?' activo':''}" onclick="cambiarFiltro('grupo:${g}')">Grupo ${g}</span>`).join('')}
+      </div>`;
+
       for(const g of GRUPOS){
         const pts=PARTIDOS.map((p,i)=>({...p,idx:i})).filter(p=>p.grupo===g);
-        const isOpen=sessionStorage.getItem("grupo_"+g)!=="closed";
+        let matchesToShow=pts;
+        if(filtro==="hoy")matchesToShow=pts.filter(p=>p.fecha===hoyStr);
+        else if(filtro.startsWith("fecha:"))matchesToShow=pts.filter(p=>p.fecha===filtro.replace("fecha:",""));
+        else if(filtro.startsWith("grupo:")){const fg=filtro.replace("grupo:","");if(g!==fg)continue;}
+        const mostrarGrupo=filtro==="todas"?sessionStorage.getItem("grupo_"+g)!=="closed":true;
         html+=`<div class="grupo">
           <div class="grupo-header" onclick="toggleGrupo('${g}')">
-            Grupo ${g} <span class="arrow${isOpen?' abierto':''}">▼</span>
+            Grupo ${g} <span class="arrow${mostrarGrupo?' abierto':''}">▼</span>
           </div>
-          <div class="grupo-body" style="display:${isOpen?'block':'none'}">`;
-        for(let gi=0;gi<pts.length;gi++){
-          const p=pts[gi];
+          <div class="grupo-body" style="display:${mostrarGrupo?'block':'none'}">`;
+        for(let gi=0;gi<matchesToShow.length;gi++){
+          const p=matchesToShow[gi];
           if(gi%2===0){
-            const numF=Math.floor(gi/2)+1;
-            html+=`<div style="font-size:.72rem;color:#94a3b8;padding:6px 0 2px;font-weight:600;letter-spacing:.5px;text-align:center">Fecha ${numF}</div>`;
+            html+=`<div style="font-size:.72rem;color:#94a3b8;padding:6px 0 2px;font-weight:600;letter-spacing:.5px;text-align:center">${p.fecha}</div>`;
           }
           const r=reales[p.idx]||{};
           const cerrado=reales[p.idx]&&reales[p.idx].gl!==undefined&&!ADMIN_MODE;
