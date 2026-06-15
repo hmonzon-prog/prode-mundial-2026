@@ -1563,6 +1563,7 @@ body::before {
                       <span class="sep">-</span>
                       <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
                 }
+                ${ADMIN_MODE&&EDITANDO_KEY&&reales[p.idx]&&reales[p.idx].gl!==undefined?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px">Real: ${reales[p.idx].gl}-${reales[p.idx].gv}</div>`:''}
               </div>
               <div class="eq visit">
                 <img src="https://flagcdn.com/w80/${FLAGS[p.visit]}.png" class="flag" alt="">
@@ -1599,7 +1600,8 @@ body::before {
         html+=`<div class="acciones"><button onclick="guardarPrediccion()">💾 Guardar Prediccion</button></div>`;
       }
 
-      if((bloqueado&&!ADMIN_MODE)||(ADMIN_MODE&&EDITANDO_KEY)) html+=generarResumen(data.resultados,reales,hayReales);
+      const resumenResultados = ADMIN_MODE&&EDITANDO_KEY ? (bd.usuarios[EDITANDO_KEY].resultados||[]) : (data?data.resultados:[]);
+      if((bloqueado&&!ADMIN_MODE)||(ADMIN_MODE&&EDITANDO_KEY)) html+=generarResumen(resumenResultados,reales,hayReales);
 
       html+=`</div>`;
 
