@@ -1453,7 +1453,7 @@ body::before {
 
     async function guardarResultadosAdmin(){
       const inputs=document.querySelectorAll(".inp-gl");
-      const reales=[];
+      const reales=bd.reales?[...bd.reales]:[];
       for(const inp of inputs){
         const idx=parseInt(inp.dataset.idx);
         const gv=document.querySelector(`.inp-gv[data-idx="${idx}"]`);
@@ -1488,7 +1488,7 @@ body::before {
       const bloqueado=data&&data.resultados&&data.resultados.length>0;
       const hoy=new Date();
       const hoyStr=`${hoy.getDate()}/${hoy.getMonth()+1}`;
-      const filtro=sessionStorage.getItem("prode_filtro")||"todas";
+      const filtro=(ADMIN_MODE&&!EDITANDO_KEY)?"todas":(sessionStorage.getItem("prode_filtro")||"todas");
       const fechas=[...new Set(PARTIDOS.map(p=>p.fecha))].sort((a,b)=>{const[d1,m1]=a.split('/').map(Number);const[d2,m2]=b.split('/').map(Number);return m1-m2||d1-d2});
 
       let html=`<header>
@@ -1556,7 +1556,7 @@ body::before {
         </div>`:''}
       </div>`;
 
-      html+=`<div class="filtros">
+      if(!(ADMIN_MODE&&!EDITANDO_KEY))html+=`<div class="filtros">
         <span class="filtro-pill${filtro==='todas'?' activo':''}" onclick="cambiarFiltro('todas')">Todas</span>
         <span class="filtro-pill${filtro==='hoy'?' activo':''}" onclick="cambiarFiltro('hoy')">Hoy</span>
         ${fechas.map(f=>`<span class="filtro-pill${filtro==='fecha:'+f?' activo':''}" onclick="cambiarFiltro('fecha:${f}')">${f}</span>`).join('')}
