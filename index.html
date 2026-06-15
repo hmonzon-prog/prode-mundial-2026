@@ -1555,22 +1555,20 @@ body::before {
                 ${p.local}
               </div>
               <div class="score-input">
-                ${cerrado
-                  ?`<span class="score-display">${r.gl}</span><span class="sep">-</span><span class="score-display">${r.gv}</span>`
-                  :!editable
-                    ?`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
-                    :`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
-                      <span class="sep">-</span>
-                      <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
+                ${editable&&!cerrado
+                  ?`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
+                    <span class="sep">-</span>
+                    <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
+                  :`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
                 }
-                ${ADMIN_MODE&&EDITANDO_KEY&&reales[p.idx]&&reales[p.idx].gl!==undefined?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px">Real: ${reales[p.idx].gl}-${reales[p.idx].gv}</div>`:''}
+                ${reales[p.idx]&&reales[p.idx].gl!==undefined&&!(ADMIN_MODE&&!EDITANDO_KEY)?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px">Real: ${reales[p.idx].gl}-${reales[p.idx].gv}</div>`:''}
               </div>
               <div class="eq visit">
                 <img src="https://flagcdn.com/w80/${FLAGS[p.visit]}.png" class="flag" alt="">
                 ${p.visit}
               </div>
             </div>
-            ${!cerrado&&ptsG!==null&&bd.scoring_active?`<div style="margin-top:10px;"><span class="pts-badge pts-${ptsG}">${ptsG}p</span></div>`:''}
+            ${ptsG!==null&&bd.scoring_active?`<div style="margin-top:10px;"><span class="pts-badge pts-${ptsG}">${ptsG}p</span></div>`:''}
           </div>`;
         }
         html+=`</div></div>`;
