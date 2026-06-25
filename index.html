@@ -1214,6 +1214,26 @@ body::before {
       }
     }
 
+    const ALLOWED_KEYS=new Set([
+      "alcides_ortiz","brian_trinidad","claudio_lencina",
+      "franco_jacobsen","gaston_lobo","hernan_monzon",
+      "jorge_veron","lucas_lobo","lucas_salvatierra"
+    ]);
+
+    async function doLogin(){
+      const nom=document.getElementById("nombre").value.trim();
+      const ape=document.getElementById("apellido").value.trim();
+      const err=document.getElementById("loginError");
+      if(!nom||!ape){err.textContent="Completá nombre y apellido";return}
+      err.textContent="";
+      const key=normalizeKey(nom+"_"+ape);
+      if(!ALLOWED_KEYS.has(key)){err.textContent="No estás habilitado para ingresar.";return}
+      USUARIO={nombre:nom,apellido:ape,key};
+      ADMIN_MODE=false;
+      sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
+      renderApp();
+    }
+
     // === LOGIN ===
     function loginHTML(){
       return `
@@ -1309,27 +1329,6 @@ body::before {
       }catch(e){
         msg.textContent=e.message;
       }
-    }
-
-    async function doLogin(){
-      const nom=document.getElementById("nombre").value.trim();
-      const ape=document.getElementById("apellido").value.trim();
-      const err=document.getElementById("loginError");
-      if(!nom||!ape){err.textContent="Completá nombre y apellido";return}
-      err.textContent="";
-      const key=normalizeKey(nom+"_"+ape);
-      USUARIO={nombre:nom,apellido:ape,key};
-      ADMIN_MODE=false;
-      sessionStorage.setItem(SESSION_KEY,JSON.stringify(USUARIO));
-      
-      if(bd&&!bd.usuarios[key]){
-        await initBD();
-        if(bd&&!bd.usuarios[key]){
-          bd.usuarios[key]={nombre:nom,apellido:ape,fecha:"-",resultados:[],campeon:"",goleador:""};
-          await guardarBD({["usuarios."+key]: bd.usuarios[key]});
-        }
-      }
-      renderApp();
     }
 
     function mostrarAyuda(){
