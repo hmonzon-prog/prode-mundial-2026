@@ -1123,44 +1123,46 @@ body::before {
     ];
 
     const PARTIDOS_ELIM = [
-      // 16vos de Final (16 partidos)
-      {ronda:"16vos", local:"1° Grupo A", visit:"3° Grupo B/C/D", nro:1},
-      {ronda:"16vos", local:"1° Grupo D", visit:"3° Grupo B/E/F", nro:2},
-      {ronda:"16vos", local:"1° Grupo E", visit:"3° Grupo D/F/G", nro:3},
-      {ronda:"16vos", local:"1° Grupo H", visit:"3° Grupo F/G/I", nro:4},
-      {ronda:"16vos", local:"1° Grupo I", visit:"3° Grupo H/J/K", nro:5},
-      {ronda:"16vos", local:"1° Grupo L", visit:"3° Grupo H/J/K", nro:6},
-      {ronda:"16vos", local:"1° Grupo B", visit:"3° Grupo A/C/D", nro:7},
-      {ronda:"16vos", local:"1° Grupo F", visit:"3° Grupo D/E/H", nro:8},
-      {ronda:"16vos", local:"1° Grupo J", visit:"3° Grupo I/K/L", nro:9},
-      {ronda:"16vos", local:"2° Grupo A", visit:"2° Grupo C", nro:10},
-      {ronda:"16vos", local:"2° Grupo E", visit:"2° Grupo G", nro:11},
-      {ronda:"16vos", local:"2° Grupo I", visit:"2° Grupo K", nro:12},
-      {ronda:"16vos", local:"1° Grupo C", visit:"3° Grupo A/B/D", nro:13},
-      {ronda:"16vos", local:"1° Grupo G", visit:"3° Grupo E/F/H", nro:14},
-      {ronda:"16vos", local:"1° Grupo K", visit:"3° Grupo I/J/L", nro:15},
-      {ronda:"16vos", local:"2° Grupo B", visit:"2° Grupo D", nro:16},
+      // 32vos de Final - Ronda de 32 (16 partidos) - cruces reales
+      {ronda:"32vos", local:"Sudáfrica", visit:"Canadá", nro:1},
+      {ronda:"32vos", local:"Alemania", visit:"Paraguay", nro:2},
+      {ronda:"32vos", local:"Países Bajos", visit:"Marruecos", nro:3},
+      {ronda:"32vos", local:"Brasil", visit:"Japón", nro:4},
+      {ronda:"32vos", local:"Francia", visit:"Suecia", nro:5},
+      {ronda:"32vos", local:"Costa de Marfil", visit:"Noruega", nro:6},
+      {ronda:"32vos", local:"México", visit:"Ecuador", nro:7},
+      {ronda:"32vos", local:"Inglaterra", visit:"RD Congo", nro:8},
+      {ronda:"32vos", local:"EE. UU.", visit:"Bosnia", nro:9},
+      {ronda:"32vos", local:"Bélgica", visit:"Senegal", nro:10},
+      {ronda:"32vos", local:"Portugal", visit:"Croacia", nro:11},
+      {ronda:"32vos", local:"España", visit:"Austria", nro:12},
+      {ronda:"32vos", local:"Suiza", visit:"Argelia", nro:13},
+      {ronda:"32vos", local:"Argentina", visit:"Cabo Verde", nro:14},
+      {ronda:"32vos", local:"Colombia", visit:"Ghana", nro:15},
+      {ronda:"32vos", local:"Australia", visit:"Egipto", nro:16},
       // 8vos de Final (8 partidos)
-      {ronda:"8vos", local:"Ganador 16vo 1", visit:"Ganador 16vo 2", nro:1},
-      {ronda:"8vos", local:"Ganador 16vo 3", visit:"Ganador 16vo 4", nro:2},
-      {ronda:"8vos", local:"Ganador 16vo 5", visit:"Ganador 16vo 6", nro:3},
-      {ronda:"8vos", local:"Ganador 16vo 7", visit:"Ganador 16vo 8", nro:4},
-      {ronda:"8vos", local:"Ganador 16vo 9", visit:"Ganador 16vo 10", nro:5},
-      {ronda:"8vos", local:"Ganador 16vo 11", visit:"Ganador 16vo 12", nro:6},
-      {ronda:"8vos", local:"Ganador 16vo 13", visit:"Ganador 16vo 14", nro:7},
-      {ronda:"8vos", local:"Ganador 16vo 15", visit:"Ganador 16vo 16", nro:8},
+      {ronda:"8vos", local:"Ganador 32vo 2", visit:"Ganador 32vo 5", nro:1},
+      {ronda:"8vos", local:"Canadá", visit:"Ganador 32vo 3", nro:2},
+      {ronda:"8vos", local:"Ganador 32vo 4", visit:"Ganador 32vo 6", nro:3},
+      {ronda:"8vos", local:"Ganador 32vo 7", visit:"Ganador 32vo 8", nro:4},
+      {ronda:"8vos", local:"Ganador 32vo 11", visit:"Ganador 32vo 12", nro:5},
+      {ronda:"8vos", local:"Ganador 32vo 9", visit:"Ganador 32vo 10", nro:6},
+      {ronda:"8vos", local:"Ganador 32vo 14", visit:"Ganador 32vo 16", nro:7},
+      {ronda:"8vos", local:"Ganador 32vo 13", visit:"Ganador 32vo 15", nro:8},
       // 4tos de Final (4 partidos)
       {ronda:"4tos", local:"Ganador 8vo 1", visit:"Ganador 8vo 2", nro:1},
-      {ronda:"4tos", local:"Ganador 8vo 3", visit:"Ganador 8vo 4", nro:2},
-      {ronda:"4tos", local:"Ganador 8vo 5", visit:"Ganador 8vo 6", nro:3},
+      {ronda:"4tos", local:"Ganador 8vo 5", visit:"Ganador 8vo 6", nro:2},
+      {ronda:"4tos", local:"Ganador 8vo 3", visit:"Ganador 8vo 4", nro:3},
       {ronda:"4tos", local:"Ganador 8vo 7", visit:"Ganador 8vo 8", nro:4},
       // Semifinales (2 partidos)
       {ronda:"Semi", local:"Ganador 4to 1", visit:"Ganador 4to 2", nro:1},
       {ronda:"Semi", local:"Ganador 4to 3", visit:"Ganador 4to 4", nro:2},
+      // 3er Puesto (1 partido)
+      {ronda:"3er", local:"Perdedor Semi 1", visit:"Perdedor Semi 2", nro:1},
       // Final (1 partido)
       {ronda:"Final", local:"Ganador Semi 1", visit:"Ganador Semi 2", nro:1}
     ];
-    const TOTAL_ELIM = PARTIDOS_ELIM.length; // 31
+    const TOTAL_ELIM = PARTIDOS_ELIM.length; // 32
 
     const FLAGS = {
       "México":"mx", "Sudáfrica":"za", "Corea del Sur":"kr", "República Checa":"cz", "Rep. Checa":"cz",
@@ -1403,14 +1405,15 @@ body::before {
           <li><strong>+10 pts</strong> - Si acertás el Campeón Real</li>
           <li><strong>+5 pts</strong> - Si acertás el Goleador Real</li>
         </ul>
-        <h4>🔜 Fase 2 - Eliminatorias</h4>
-        <p>Cuando la FIFA confirme los cruces, vas a poder pronosticar:</p>
+        <h4>🏆 Fase 2 - Eliminatorias</h4>
+        <p>Pronosticá los 32 partidos de eliminación directa:</p>
         <ul>
-          <li>32avos de final</li>
-          <li>8vos de final</li>
-          <li>4tos de final</li>
-          <li>Semifinales</li>
-          <li>Final</li>
+          <li>32vos de final (16 partidos)</li>
+          <li>8vos de final (8 partidos)</li>
+          <li>4tos de final (4 partidos)</li>
+          <li>Semifinales (2 partidos)</li>
+          <li>3er Puesto (1 partido)</li>
+          <li>Final (1 partido)</li>
         </ul>
         <p>Solo suman puntos los partidos que realmente se jueguen en cada etapa.</p>
       </div>`;
@@ -1752,8 +1755,8 @@ body::before {
         html+=`<div class="msg warn">Completá los resultados de la eliminatoria y guardá al final.</div>`;
       }
       if(bloqueado || ADMIN_MODE){
-        const rondas = ["16vos","8vos","4tos","Semi","Final"];
-        const labels = {"16vos":"16vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","Final":"Final"};
+        const rondas = ["32vos","8vos","4tos","Semi","3er","Final"];
+        const labels = {"32vos":"32vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","3er":"3er Puesto","Final":"Final"};
         for(const r of rondas){
           const matches = PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===r);
           html+=`<div class="grupo">
@@ -2118,8 +2121,8 @@ body::before {
         doc.setFontSize(10);doc.setFont("helvetica","bold");
         doc.text("Eliminatoria",W/2,ey+5.5,{align:"center"});
         ey += 12;
-        const rondas = ["16vos","8vos","4tos","Semi","Final"];
-        const labels = {"16vos":"16vos","8vos":"8vos","4tos":"4tos","Semi":"Semi","Final":"Final"};
+        const rondas = ["32vos","8vos","4tos","Semi","3er","Final"];
+        const labels = {"32vos":"32vos","8vos":"8vos","4tos":"4tos","Semi":"Semi","3er":"3er","Final":"Final"};
         for(const r of rondas){
           const matches = PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===r);
           if(ey + matches.length * 5 + 8 > 285){
