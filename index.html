@@ -1122,6 +1122,46 @@ body::before {
       {local:"Croacia", visit:"Ghana", grupo:"L", fecha:"27/6"}
     ];
 
+    const PARTIDOS_ELIM = [
+      // 16vos de Final (16 partidos)
+      {ronda:"16vos", local:"1° Grupo A", visit:"3° Grupo B/C/D", nro:1},
+      {ronda:"16vos", local:"1° Grupo D", visit:"3° Grupo B/E/F", nro:2},
+      {ronda:"16vos", local:"1° Grupo E", visit:"3° Grupo D/F/G", nro:3},
+      {ronda:"16vos", local:"1° Grupo H", visit:"3° Grupo F/G/I", nro:4},
+      {ronda:"16vos", local:"1° Grupo I", visit:"3° Grupo H/J/K", nro:5},
+      {ronda:"16vos", local:"1° Grupo L", visit:"3° Grupo H/J/K", nro:6},
+      {ronda:"16vos", local:"1° Grupo B", visit:"3° Grupo A/C/D", nro:7},
+      {ronda:"16vos", local:"1° Grupo F", visit:"3° Grupo D/E/H", nro:8},
+      {ronda:"16vos", local:"1° Grupo J", visit:"3° Grupo I/K/L", nro:9},
+      {ronda:"16vos", local:"2° Grupo A", visit:"2° Grupo C", nro:10},
+      {ronda:"16vos", local:"2° Grupo E", visit:"2° Grupo G", nro:11},
+      {ronda:"16vos", local:"2° Grupo I", visit:"2° Grupo K", nro:12},
+      {ronda:"16vos", local:"1° Grupo C", visit:"3° Grupo A/B/D", nro:13},
+      {ronda:"16vos", local:"1° Grupo G", visit:"3° Grupo E/F/H", nro:14},
+      {ronda:"16vos", local:"1° Grupo K", visit:"3° Grupo I/J/L", nro:15},
+      {ronda:"16vos", local:"2° Grupo B", visit:"2° Grupo D", nro:16},
+      // 8vos de Final (8 partidos)
+      {ronda:"8vos", local:"Ganador 16vo 1", visit:"Ganador 16vo 2", nro:1},
+      {ronda:"8vos", local:"Ganador 16vo 3", visit:"Ganador 16vo 4", nro:2},
+      {ronda:"8vos", local:"Ganador 16vo 5", visit:"Ganador 16vo 6", nro:3},
+      {ronda:"8vos", local:"Ganador 16vo 7", visit:"Ganador 16vo 8", nro:4},
+      {ronda:"8vos", local:"Ganador 16vo 9", visit:"Ganador 16vo 10", nro:5},
+      {ronda:"8vos", local:"Ganador 16vo 11", visit:"Ganador 16vo 12", nro:6},
+      {ronda:"8vos", local:"Ganador 16vo 13", visit:"Ganador 16vo 14", nro:7},
+      {ronda:"8vos", local:"Ganador 16vo 15", visit:"Ganador 16vo 16", nro:8},
+      // 4tos de Final (4 partidos)
+      {ronda:"4tos", local:"Ganador 8vo 1", visit:"Ganador 8vo 2", nro:1},
+      {ronda:"4tos", local:"Ganador 8vo 3", visit:"Ganador 8vo 4", nro:2},
+      {ronda:"4tos", local:"Ganador 8vo 5", visit:"Ganador 8vo 6", nro:3},
+      {ronda:"4tos", local:"Ganador 8vo 7", visit:"Ganador 8vo 8", nro:4},
+      // Semifinales (2 partidos)
+      {ronda:"Semi", local:"Ganador 4to 1", visit:"Ganador 4to 2", nro:1},
+      {ronda:"Semi", local:"Ganador 4to 3", visit:"Ganador 4to 4", nro:2},
+      // Final (1 partido)
+      {ronda:"Final", local:"Ganador Semi 1", visit:"Ganador Semi 2", nro:1}
+    ];
+    const TOTAL_ELIM = PARTIDOS_ELIM.length; // 31
+
     const FLAGS = {
       "México":"mx", "Sudáfrica":"za", "Corea del Sur":"kr", "República Checa":"cz", "Rep. Checa":"cz",
       "Canadá":"ca", "Bosnia y Herzegovina":"ba", "Bosnia":"ba", "Catar":"qa", "Suiza":"ch",
@@ -1143,7 +1183,7 @@ body::before {
     const SESSION_KEY = "prode2026_sesion";
 
     // === ESTADO GLOBAL ===
-    let bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
+    let bd = { usuarios: {}, reales: [], reales_elim: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
     let USUARIO = null;
     let ADMIN_MODE = false;
     let EDITANDO_KEY = null;
@@ -1157,6 +1197,7 @@ body::before {
           bd = {
             usuarios: {},
             reales: d.reales || [],
+            reales_elim: d.reales_elim || [],
             campeon_real: d.campeon_real || "",
             goleador_real: d.goleador_real || "",
             admin_email: d.admin_email || "",
@@ -1164,7 +1205,7 @@ body::before {
             scoring_start: d.scoring_start || "13/6"
           };
         } else {
-          bd = { usuarios: {}, reales: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
+          bd = { usuarios: {}, reales: [], reales_elim: [], campeon_real: "", goleador_real: "", admin_email: "", scoring_active: false, scoring_start: "13/6" };
         }
         
         const usersSnap = await DB.collection("usuarios").get();
@@ -1181,9 +1222,10 @@ body::before {
       if(!bd) return;
       if(!updates){console.warn("guardarBD sin updates - ignorado");return}
       try{
-        if ("reales" in updates || "campeon_real" in updates || "goleador_real" in updates || "scoring_active" in updates || "scoring_start" in updates) {
+        if ("reales" in updates || "reales_elim" in updates || "campeon_real" in updates || "goleador_real" in updates || "scoring_active" in updates || "scoring_start" in updates) {
           await DB.collection("config").doc("real").set({
             reales: bd.reales || [],
+            reales_elim: bd.reales_elim || [],
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
             admin_email: bd.admin_email || "",
@@ -1195,6 +1237,7 @@ body::before {
         if ("admin_email" in updates) {
           await DB.collection("config").doc("real").set({
             reales: bd.reales || [],
+            reales_elim: bd.reales_elim || [],
             campeon_real: bd.campeon_real || "",
             goleador_real: bd.goleador_real || "",
             admin_email: updates.admin_email,
@@ -1450,6 +1493,31 @@ body::before {
       setTimeout(()=>descargarPDF(USUARIO.key),500);
     }
 
+    async function guardarEliminatoria(){
+      const inputs=document.querySelectorAll(".inp-gl-elim");
+      const resultados=new Array(TOTAL_ELIM).fill(null);
+      for(const inp of inputs){
+        const idx=parseInt(inp.dataset.idx);
+        const gv=document.querySelector(`.inp-gv-elim[data-idx="${idx}"]`);
+        const gl=inp.value.trim();
+        const gvVal=gv.value.trim();
+        if(gl===""||gvVal===""||isNaN(gl)||isNaN(gvVal)||parseInt(gl)<0||parseInt(gvVal)<0){
+          alert("Completá todos los resultados de la eliminatoria con números (0 o más).");
+          return;
+        }
+      }
+      for(const inp of inputs){
+        const idx=parseInt(inp.dataset.idx);
+        const gv=document.querySelector(`.inp-gv-elim[data-idx="${idx}"]`);
+        resultados[idx]={gl:parseInt(inp.value),gv:parseInt(gv.value)};
+      }
+      if(!confirm("¿Guardar predicción de eliminatoria? Una vez guardada no se puede modificar."))return;
+      bd.usuarios[USUARIO.key].elim_resultados=resultados;
+      await guardarBD({["usuarios."+USUARIO.key]: bd.usuarios[USUARIO.key]});
+      renderApp();
+      setTimeout(()=>descargarPDF(USUARIO.key),500);
+    }
+
     async function guardarResultadosAdmin(){
       const inputs=document.querySelectorAll(".inp-gl");
       const reales=bd.reales?[...bd.reales]:[];
@@ -1469,6 +1537,25 @@ body::before {
       bd.goleador_real=document.getElementById("inp-goleador-real").value.trim();
       
       await guardarBD({reales:bd.reales, campeon_real:bd.campeon_real, goleador_real:bd.goleador_real});
+      renderApp();
+    }
+
+    async function guardarResultadosElimAdmin(){
+      const inputs=document.querySelectorAll(".inp-gl-elim");
+      const reales=bd.reales_elim?[...bd.reales_elim]:[];
+      for(const inp of inputs){
+        const idx=parseInt(inp.dataset.idx);
+        const gv=document.querySelector(`.inp-gv-elim[data-idx="${idx}"]`);
+        const glVal=inp.value.trim();
+        const gvVal=gv.value.trim();
+        if(glVal!==""&&gvVal!==""){
+          reales[idx]={gl:parseInt(glVal),gv:parseInt(gvVal)};
+        }else{
+          reales[idx]=null;
+        }
+      }
+      bd.reales_elim=reales;
+      await guardarBD({reales_elim:bd.reales_elim});
       renderApp();
     }
 
@@ -1505,7 +1592,7 @@ body::before {
         </div>
       </header>`;
 
-      const tabs=[{id:"prode",label:"📋 Mi Prode"},{id:"ranking",label:"🏆 Ranking"}];
+      const tabs=[{id:"prode",label:"📋 Mi Prode"},{id:"elim",label:"🏆 Eliminatoria"},{id:"ranking",label:"🏆 Ranking"}];
       html+=`<div class="tabs">`;
       for(const t of tabs) html+=`<div class="tab${tab===t.id?' activo':''}" onclick="cambiarTab('${t.id}')">${t.label}</div>`;
       html+=`</div>`;
@@ -1650,7 +1737,82 @@ body::before {
       const resumenResultados = ADMIN_MODE&&EDITANDO_KEY ? (bd.usuarios[EDITANDO_KEY].resultados||[]) : (data?data.resultados:[]);
       if((bloqueado&&!ADMIN_MODE)||(ADMIN_MODE&&EDITANDO_KEY)) html+=generarResumen(resumenResultados,reales,hayReales);
 
-      html+=`</div>`;
+      html+=`</div>`; // fin tab-prode
+
+      // === TAB ELIMINATORIA ===
+      const elimBloqueado = data && data.elim_resultados && data.elim_resultados.length > 0;
+      const realesElim = bd.reales_elim || [];
+      const hayRealesElim = realesElim.filter(r=>r!==null).length > 0;
+      html+=`<div class="tab-content${tab==='elim'?' activo':''}" id="tab-elim">`;
+
+      if(!ADMIN_MODE && elimBloqueado){
+        html+=`<div class="msg info">Eliminatoria guardada el ${data.fecha}. No se puede modificar.</div>`;
+      }
+      if(!ADMIN_MODE && !elimBloqueado && bloqueado){
+        html+=`<div class="msg warn">Completá los resultados de la eliminatoria y guardá al final.</div>`;
+      }
+      if(bloqueado || ADMIN_MODE){
+        const rondas = ["16vos","8vos","4tos","Semi","Final"];
+        const labels = {"16vos":"16vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","Final":"Final"};
+        for(const r of rondas){
+          const matches = PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===r);
+          html+=`<div class="grupo">
+            <div class="grupo-header" style="cursor:default;background:${r==='Final'?'linear-gradient(135deg,#1a1a2e,#16213e)':r==='Semi'?'#1c2128':'#1c2128'}">
+              ${r==='Final'?'🏆 ':''}${labels[r]} <span style="font-weight:400;font-size:.75rem;color:var(--text-muted)">${matches.length} partidos</span>
+            </div>
+            <div class="grupo-body">`;
+          for(const p of matches){
+            const rl = realesElim[p.idx] || {};
+            const cerradoElim = realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !ADMIN_MODE;
+            let val;
+            if(ADMIN_MODE && EDITANDO_KEY){
+              const uData = bd.usuarios[EDITANDO_KEY];
+              val = uData && uData.elim_resultados ? uData.elim_resultados[p.idx] || {gl:"",gv:""} : {gl:"",gv:""};
+            }else if(ADMIN_MODE){
+              val = realesElim[p.idx] || {gl:"",gv:""};
+            }else if(elimBloqueado){
+              val = data.elim_resultados[p.idx] || {gl:"",gv:""};
+            }else{
+              val = {gl:"",gv:""};
+            }
+            const editableElim = (bloqueado && !elimBloqueado && !ADMIN_MODE) || (ADMIN_MODE && EDITANDO_KEY) || ADMIN_MODE;
+            html+=`<div class="partido${cerradoElim?' cerrado':''}" style="grid-template-columns:1fr auto 1fr">
+              ${cerradoElim?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
+              <div class="eq local" style="font-size:.78rem;color:${r==='Final'?'#fbbf24':'var(--text-main)'}">${p.local}</div>
+              <div class="score-input">
+                ${editableElim&&!cerradoElim && (bloqueado||ADMIN_MODE)
+                  ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
+                    <span class="sep">-</span>
+                    <input type="number" min="0" max="99" class="inp-gv-elim" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
+                  :`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
+                }
+                ${realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !(ADMIN_MODE&&!EDITANDO_KEY)?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px">Real: ${realesElim[p.idx].gl}-${realesElim[p.idx].gv}</div>`:''}
+              </div>
+              <div class="eq visit" style="font-size:.78rem;color:${r==='Final'?'#fbbf24':'var(--text-main)'}">${p.visit}</div>
+            </div>`;
+          }
+          html+=`</div></div>`;
+        }
+
+        // Acciones eliminatoria
+        if(ADMIN_MODE && EDITANDO_KEY){
+          const u=bd.usuarios[EDITANDO_KEY];
+          html+=`<div class="acciones">
+            <button onclick="guardarEdicionUsuario()">💾 Guardar para ${u.nombre}</button>
+            <button class="btn-sec" onclick="descargarPDF('${EDITANDO_KEY}')">📄 PDF</button>
+            <button class="btn-sec" onclick="cancelarEdicion()">✕ Cancelar</button>
+          </div>`;
+        }else if(ADMIN_MODE && !EDITANDO_KEY){
+          html+=`<div class="acciones"><button onclick="guardarResultadosElimAdmin()">💾 Guardar Resultados Reales Eliminatoria</button></div>`;
+        }else if(elimBloqueado){
+          html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
+        }else if(bloqueado && !elimBloqueado){
+          html+=`<div class="acciones"><button onclick="guardarEliminatoria()">💾 Guardar Prediccion Eliminatoria</button></div>`;
+        }
+      }else if(!bloqueado){
+        html+=`<div style="text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.9rem">📋 Completá primero la fase de grupos para acceder a la eliminatoria.</div>`;
+      }
+      html+=`</div>`; // fin tab-elim
 
       html+=`<div class="tab-content${tab==='ranking'?' activo':''}" id="tab-ranking">`;
       html+=renderRanking(reales,hayReales,ADMIN_MODE);
@@ -1731,6 +1893,16 @@ body::before {
           const p=calcularPts(usr.resultados[i],reales[i],PARTIDOS[i].fecha);
           if(p===3)p3++;else if(p===1)p1++;
           if(p)pts+=p;
+        }
+        // Eliminatoria points
+        const elimR = bd.reales_elim || [];
+        const elimU = usr.elim_resultados || [];
+        if(elimU.length > 0){
+          for(let i=0;i<PARTIDOS_ELIM.length;i++){
+            const p=calcularPts(elimU[i],elimR[i],null);
+            if(p===3)p3++;else if(p===1)p1++;
+            if(p)pts+=p;
+          }
         }
         let bonus=0;
         if(bd.campeon_real&&usr.campeon===bd.campeon_real)bonus+=10;
@@ -1821,12 +1993,36 @@ body::before {
 
       for(let i=0;i<resultados.length;i++)if(resultados[i]===undefined)resultados[i]=null;
 
+      // Eliminatoria
+      const elimEx = u.elim_resultados || [];
+      const elimInputs = document.querySelectorAll(".inp-gl-elim");
+      const elimResultados = [];
+      if(elimInputs.length > 0){
+        for(const inp of elimInputs){
+          const idx=parseInt(inp.dataset.idx);
+          const gv=document.querySelector(`.inp-gv-elim[data-idx="${idx}"]`);
+          const gl=inp.value.trim();
+          const gvVal=gv.value.trim();
+          if(gl===""||gvVal===""){
+            elimResultados[idx]=elimEx[idx]||null;
+          }else if(isNaN(gl)||isNaN(gvVal)||parseInt(gl)<0||parseInt(gvVal)<0){
+            alert(`Eliminatoria #${idx+1} inválido.`);
+            return;
+          }else{
+            elimResultados[idx]={gl:parseInt(gl),gv:parseInt(gvVal)};
+          }
+        }
+        for(let i=0;i<elimResultados.length;i++)if(elimResultados[i]===undefined)elimResultados[i]=null;
+      }
+
       const campeon=document.getElementById("inp-campeon");
       const goleador=document.getElementById("inp-goleador");
       const campeonVal=campeon?campeon.value:(u.campeon||"");
       const goleadorVal=goleador?goleador.value.trim():(u.goleador||"");
       if(!confirm(`Guardar predicción para ${u.nombre} ${u.apellido}?`))return;
-      bd.usuarios[EDITANDO_KEY]={nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados,campeon:campeonVal,goleador:goleadorVal};
+      const updated = {nombre:u.nombre,apellido:u.apellido,fecha:new Date().toLocaleString("es-AR"),resultados,campeon:campeonVal,goleador:goleadorVal};
+      if(elimResultados.length > 0) updated.elim_resultados = elimResultados;
+      bd.usuarios[EDITANDO_KEY] = updated;
       await guardarBD({["usuarios."+EDITANDO_KEY]: bd.usuarios[EDITANDO_KEY]});
       EDITANDO_KEY=null;
       renderApp();
@@ -1908,12 +2104,66 @@ body::before {
         col++;if(col>2)col=0;
       }
 
-      // Footer
-      const totalY=Math.max(...colY)+5;
-      doc.setDrawColor(220,220,220);
-      doc.line(14,totalY,W-14,totalY);
-      doc.setFontSize(7);doc.setTextColor(120,120,120);doc.setFont("helvetica","normal");
-      doc.text(`Generado el ${new Date().toLocaleDateString("es-AR")}`,W/2,totalY+5,{align:"center"});
+      // Eliminatoria section
+      const elimResultados = usr.elim_resultados || [];
+      const realesElim = bd.reales_elim || [];
+      if(elimResultados.length > 0){
+        const elimY = Math.max(...colY) + 5;
+        doc.setDrawColor(220,220,220);
+        doc.line(14,elimY,W-14,elimY);
+        let ey = elimY + 5;
+        doc.setFillColor(37,99,235);
+        doc.rect(14,ey,W-28,8,"F");
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(10);doc.setFont("helvetica","bold");
+        doc.text("Eliminatoria",W/2,ey+5.5,{align:"center"});
+        ey += 12;
+        const rondas = ["16vos","8vos","4tos","Semi","Final"];
+        const labels = {"16vos":"16vos","8vos":"8vos","4tos":"4tos","Semi":"Semi","Final":"Final"};
+        for(const r of rondas){
+          const matches = PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===r);
+          if(ey + matches.length * 5 + 8 > 285){
+            doc.addPage(); ey = 15;
+          }
+          doc.setFillColor(239,246,255);
+          doc.rect(14,ey,W-28,7,"F");
+          doc.setTextColor(37,99,235);
+          doc.setFontSize(8);doc.setFont("helvetica","bold");
+          doc.text(labels[r],16,ey+5);
+          ey += 8;
+          for(const p of matches){
+            const rp = elimResultados[p.idx];
+            const score = rp ? `${rp.gl}-${rp.gv}` : "?-?";
+            const real = realesElim[p.idx];
+            doc.setFont("helvetica","normal");
+            doc.setFontSize(7);
+            doc.setTextColor(30,30,30);
+            doc.text(`${p.local} vs ${p.visit}`,16,ey,{maxWidth:120});
+            doc.setFont("helvetica","bold");
+            doc.setTextColor(37,99,235);
+            doc.text(score,170,ey,{align:"center"});
+            if(real && real.gl !== undefined){
+              doc.setFont("helvetica","normal");
+              doc.setTextColor(180,120,0);
+              doc.text(`[${real.gl}-${real.gv}]`,185,ey);
+            }
+            ey += 5;
+          }
+          ey += 3;
+        }
+        var totalY = ey + 3;
+        doc.setDrawColor(220,220,220);
+        doc.line(14,totalY,W-14,totalY);
+        doc.setFontSize(7);doc.setTextColor(120,120,120);doc.setFont("helvetica","normal");
+        doc.text(`Generado el ${new Date().toLocaleDateString("es-AR")}`,W/2,totalY+5,{align:"center"});
+      }else{
+        // Footer
+        const totalY=Math.max(...colY)+5;
+        doc.setDrawColor(220,220,220);
+        doc.line(14,totalY,W-14,totalY);
+        doc.setFontSize(7);doc.setTextColor(120,120,120);doc.setFont("helvetica","normal");
+        doc.text(`Generado el ${new Date().toLocaleDateString("es-AR")}`,W/2,totalY+5,{align:"center"});
+      }
 
       doc.save(`prode-${usr.nombre}-${usr.apellido}.pdf`);
     }
@@ -1929,13 +2179,22 @@ body::before {
           if(p===3)p3++;else if(p===1)p1++;
           if(p)pts+=p;
         }
+        const elimR = bd.reales_elim || [];
+        const elimU = usr.elim_resultados || [];
+        if(elimU.length > 0){
+          for(let i=0;i<PARTIDOS_ELIM.length;i++){
+            const p=calcularPts(elimU[i],elimR[i],null);
+            if(p===3)p3++;else if(p===1)p1++;
+            if(p)pts+=p;
+          }
+        }
         let bonus=0;
         if(bd.campeon_real&&usr.campeon===bd.campeon_real)bonus+=10;
         if(bd.goleador_real&&usr.goleador&&usr.goleador.toLowerCase()===bd.goleador_real.toLowerCase())bonus+=5;
         pts+=bonus;
-        const maxP=PARTIDOS.length*3;
+        const maxP=(PARTIDOS.length+PARTIDOS_ELIM.length)*3;
         const efect=maxP>0?((pts/maxP)*100).toFixed(1):"0.0";
-        return {nombre:usr.nombre+" "+usr.apellido,pts,p3,p1,p0:usr.resultados.length-p3-p1,efect,bonus};
+        return {nombre:usr.nombre+" "+usr.apellido,pts,p3,p1,p0:(usr.resultados.length+(elimU.length||0))-p3-p1,efect,bonus};
       }).filter(f=>f!==null);
       filas.sort((a,b)=>b.pts-a.pts || b.p3-a.p3);
 
