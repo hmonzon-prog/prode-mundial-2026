@@ -1695,7 +1695,7 @@ body::before {
               </div>
               <div class="score-input">
                 ${editable&&!cerrado
-                  ?`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
+                  ?`<input type="number" min="0" max="99" class="inp-gl" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}" oninput="autofocusNext(this)">
                     <span class="sep">-</span>
                     <input type="number" min="0" max="99" class="inp-gv" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
                   :`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
@@ -1788,7 +1788,7 @@ body::before {
               <div class="eq local">${FLAGS[p.local]?`<img src="https://flagcdn.com/w80/${FLAGS[p.local]}.png" class="flag" alt="">`:''}${p.local}</div>
               <div class="score-input">
                 ${editableElim&&!cerradoElim && (bloqueado||ADMIN_MODE)
-                  ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
+                  ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}" oninput="autofocusNext(this)">
                     <span class="sep">-</span>
                     <input type="number" min="0" max="99" class="inp-gv-elim" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
                   :`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
@@ -1837,6 +1837,15 @@ body::before {
       const key="elim_ronda_"+r;
       sessionStorage.setItem(key,sessionStorage.getItem(key)==="closed"?"open":"closed");
       renderApp();
+    }
+
+    function autofocusNext(el){
+      if(el.value.length>=1){
+        const inputs=el.closest('.score-input').querySelectorAll('input[type="number"]');
+        for(const inp of inputs){
+          if(inp!==el){inp.focus();break}
+        }
+      }
     }
 
     function generarResumen(resultados,reales,hayReales){
