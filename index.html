@@ -589,6 +589,14 @@
       line-height: 1;
     }
     .btn-save-partido:hover { opacity: 1; }
+
+    .btn-pdf-ronda {
+      background: none; border: none; cursor: pointer;
+      font-size: .72rem; padding: 0 4px; opacity: .5;
+      transition: opacity .15s; vertical-align: middle; line-height: 1;
+      margin-left: auto; margin-right: 4px;
+    }
+    .btn-pdf-ronda:hover { opacity: 1; }
     
     .acciones button:disabled {
       background: rgba(255, 255, 255, 0.05);
@@ -1802,6 +1810,7 @@ body::before {
           html+=`<div class="grupo">
             <div class="grupo-header" onclick="toggleRonda('${r}')">
               ${emojis[r]} ${labels[r]} <span style="font-weight:400;font-size:.75rem;color:var(--text-muted)">${matches.length} partidos</span>
+              ${!ADMIN_MODE?`<button class="btn-pdf-ronda" onclick="event.stopPropagation();descargarPDFRonda('${USUARIO.key}','${r}')" title="PDF de ${labels[r]}">📄</button>`:''}
               <span class="arrow${mostrarRonda?' abierto':''}">▼</span>
             </div>
             <div class="grupo-body" style="display:${mostrarRonda?'block':'none'}">`;
@@ -2223,6 +2232,60 @@ body::before {
       }
 
       doc.save(`prode-${usr.nombre}-${usr.apellido}.pdf`);
+    }
+    function descargarPDFRonda(key, ronda){
+      const usr=bd.usuarios[key];
+      if(!usr){alert("No hay datos para generar PDF");return;}
+      const matches=PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===ronda);
+      if(matches.length===0)return;
+      if(!window.jspdf){alert("Tu navegador bloqueó el generador de PDF.");return;}
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+      const W=210; let y=15;
+      const label = {"32vos":"32vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","3er":"3er Puesto","Final":"Final"}[ronda]||ronda;
+      const realesElim = bd.reales_elim || [];
+      const elimResultados = usr.elim_resultados || [];
+
+      doc.setFillColor(37,99,235);
+      doc.rect(0,0,W,22,"F");
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(16);doc.setFont("helvetica","bold");
+      doc.text("Prode Mundial 2026",W/2,10,{align:"center"});
+      doc.setFontSize(10);doc.setFont("helvetica","normal");
+      doc.text(`${usr.nombre} ${usr.apellido} - ${ronda}`,W/2,17,{align:"center"});
+      y=28;
+
+      doc.setFillColor(239,246,255);
+      doc.rect(14,y,W-28,7,"F");
+      doc.setTextColor(37,99,235);
+      doc.setFontSize(9);doc.setFont("helvetica","bold");
+      doc.text(label,16,y+5);
+      y+=9;
+
+      for(const p of matches){
+        const rp=elimResultados[p.idx];
+        const score=rp?`${rp.gl}-${rp.gv}`:"?-?";
+        const real=realesElim[p.idx];
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(8);
+        doc.setTextColor(30,30,30);
+        doc.text(`${p.fecha}  ${p.local} vs ${p.visit}`,16,y,{maxWidth:130});
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(37,99,235);
+        doc.text(score,170,y,{align:"center"});
+        if(real&&real.gl!==undefined){
+          doc.setFont("helvetica","normal");
+          doc.setTextColor(180,120,0);
+          doc.text(`[${real.gl}-${real.gv}]`,185,y);
+        }
+        y+=6;
+      }
+
+      doc.setDrawColor(220,220,220);
+      doc.line(14,y+2,W-14,y+2);
+      doc.setFontSize(7);doc.setTextColor(120,120,120);doc.setFont("helvetica","normal");
+      doc.text(`Generado el ${new Date().toLocaleDateString("es-AR")}`,W/2,y+7,{align:"center"});
+      doc.save(`prode-${usr.nombre}-${usr.apellido}-${ronda}.pdf`);
     }
     function compartirRanking(){
       const entries=Object.entries(bd.usuarios).filter(([k])=>k!=="admin_admin");
