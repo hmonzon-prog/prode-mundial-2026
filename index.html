@@ -1829,21 +1829,33 @@ body::before {
             const editableElim = (data && !ADMIN_MODE) || (ADMIN_MODE && EDITANDO_KEY) || ADMIN_MODE;
             const tienePred = !ADMIN_MODE && elimPred[p.idx] && elimPred[p.idx].gl!==undefined && elimPred[p.idx].gl!=='';
             const bloqueadoElim = cerradoElim || tienePred;
-            html+=`<div class="partido${bloqueadoElim?' cerrado':''}" style="display:flex;flex-direction:column;gap:4px">
-              ${bloqueadoElim?`<span class="cerrado-badge" style="position:static;display:inline-block;width:fit-content;margin:0 auto">${tienePred?'✅ Guardado':'🔒 Cerrado'}</span>`:''}
-              <div style="font-size:.65rem;color:var(--text-muted);text-align:center">${p.fecha}</div>
-              <div class="eq local" style="text-align:center">${FLAGS[p.local]?`<img src="https://flagcdn.com/w80/${FLAGS[p.local]}.png" class="flag" alt="">`:''}${p.local}</div>
-              <div class="score-input" style="justify-content:center">
-                ${editableElim&&!bloqueadoElim
-                  ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}" oninput="autofocusNext(this)">
-                    <span class="sep">-</span>
-                    <input type="number" min="0" max="99" class="inp-gv-elim" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">
-                    ${!ADMIN_MODE && !tienePred?`<button class="btn-save-partido" onclick="guardarPartidoElim(${p.idx})" title="Guardar este partido">💾</button>`:''}`
-                  :`<span class="score-display">${val.gl!==''?val.gl:'?'}</span><span class="sep">-</span><span class="score-display">${val.gv!==''?val.gv:'?'}</span>`
-                }
-                ${realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !(ADMIN_MODE&&!EDITANDO_KEY)?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px;text-align:center">Real: ${realesElim[p.idx].gl}-${realesElim[p.idx].gv}</div>`:''}
+            const editableInputs = editableElim && !bloqueadoElim;
+            html+=`<div class="partido${bloqueadoElim?' cerrado':''}" style="display:flex;flex-direction:column;gap:2px;padding:10px 8px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:.65rem;color:var(--text-muted)">${p.fecha}</div>
+                ${bloqueadoElim?`<span class="cerrado-badge" style="position:static;font-size:.65rem;padding:2px 8px">${tienePred?'✅ Guardado':'🔒 Cerrado'}</span>`:''}
               </div>
-              <div class="eq visit" style="text-align:center">${FLAGS[p.visit]?`<img src="https://flagcdn.com/w80/${FLAGS[p.visit]}.png" class="flag" alt="">`:''}${p.visit}</div>
+              <div class="eq local" style="text-align:center;font-size:.85rem;padding:4px 0 2px">
+                ${FLAGS[p.local]?`<img src="https://flagcdn.com/w80/${FLAGS[p.local]}.png" class="flag" alt="" style="width:20px;height:15px">`:''} ${p.local}
+              </div>
+              <div style="text-align:center">
+                ${editableInputs
+                  ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}" style="width:50px;text-align:center;padding:4px;font-size:.9rem">
+                    ${!ADMIN_MODE && !tienePred?`<button class="btn-save-partido" onclick="guardarPartidoElim(${p.idx})" style="font-size:.7rem;padding:2px 6px;opacity:.6" title="Guardar este partido">💾 Guardar</button>`:''}`
+                  :`<span class="score-display" style="font-size:.9rem">${val.gl!==''?val.gl:'?'}</span>`
+                }
+              </div>
+              <div style="text-align:center;font-size:.7rem;color:var(--text-muted);padding:1px 0">VS</div>
+              <div class="eq visit" style="text-align:center;font-size:.85rem;padding:2px 0 4px">
+                ${FLAGS[p.visit]?`<img src="https://flagcdn.com/w80/${FLAGS[p.visit]}.png" class="flag" alt="" style="width:20px;height:15px">`:''} ${p.visit}
+              </div>
+              <div style="text-align:center">
+                ${editableInputs
+                  ?`<input type="number" min="0" max="99" class="inp-gv-elim" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}" style="width:50px;text-align:center;padding:4px;font-size:.9rem">`
+                  :`<span class="score-display" style="font-size:.9rem">${val.gv!==''?val.gv:'?'}</span>`
+                }
+              </div>
+                ${realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !(ADMIN_MODE&&!EDITANDO_KEY)?`<div style="font-size:.65rem;color:#f59e0b;text-align:center;padding-top:2px">Real: ${realesElim[p.idx].gl}-${realesElim[p.idx].gv}</div>`:''}
             </div>`;
           }
           html+=`</div></div>`;
