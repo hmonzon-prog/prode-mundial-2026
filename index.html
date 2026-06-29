@@ -1757,13 +1757,17 @@ body::before {
       if(bloqueado || ADMIN_MODE){
         const rondas = ["32vos","8vos","4tos","Semi","3er","Final"];
         const labels = {"32vos":"32vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","3er":"3er Puesto","Final":"Final"};
+        const emojis = {"32vos":"","8vos":"","4tos":"","Semi":"","3er":"🥉","Final":"🏆"};
         for(const r of rondas){
           const matches = PARTIDOS_ELIM.map((p,i)=>({...p,idx:i})).filter(p=>p.ronda===r);
+          const key="elim_ronda_"+r;
+          const mostrarRonda=sessionStorage.getItem(key)!=="closed";
           html+=`<div class="grupo">
-            <div class="grupo-header" style="cursor:default;background:${r==='Final'?'linear-gradient(135deg,#1a1a2e,#16213e)':r==='Semi'?'#1c2128':'#1c2128'}">
-              ${r==='Final'?'🏆 ':''}${labels[r]} <span style="font-weight:400;font-size:.75rem;color:var(--text-muted)">${matches.length} partidos</span>
+            <div class="grupo-header" onclick="toggleRonda('${r}')">
+              ${emojis[r]} ${labels[r]} <span style="font-weight:400;font-size:.75rem;color:var(--text-muted)">${matches.length} partidos</span>
+              <span class="arrow${mostrarRonda?' abierto':''}">▼</span>
             </div>
-            <div class="grupo-body">`;
+            <div class="grupo-body" style="display:${mostrarRonda?'block':'none'}">`;
           for(const p of matches){
             const rl = realesElim[p.idx] || {};
             const cerradoElim = realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !ADMIN_MODE;
@@ -1781,7 +1785,7 @@ body::before {
             const editableElim = (bloqueado && !elimBloqueado && !ADMIN_MODE) || (ADMIN_MODE && EDITANDO_KEY) || ADMIN_MODE;
             html+=`<div class="partido${cerradoElim?' cerrado':''}" style="grid-template-columns:1fr auto 1fr">
               ${cerradoElim?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
-              <div class="eq local" style="font-size:.78rem;color:${r==='Final'?'#fbbf24':'var(--text-main)'}">${p.local}</div>
+              <div class="eq local">${p.local}</div>
               <div class="score-input">
                 ${editableElim&&!cerradoElim && (bloqueado||ADMIN_MODE)
                   ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}">
@@ -1791,7 +1795,7 @@ body::before {
                 }
                 ${realesElim[p.idx] && realesElim[p.idx].gl!==undefined && !(ADMIN_MODE&&!EDITANDO_KEY)?`<div style="font-size:.65rem;color:#f59e0b;margin-top:2px">Real: ${realesElim[p.idx].gl}-${realesElim[p.idx].gv}</div>`:''}
               </div>
-              <div class="eq visit" style="font-size:.78rem;color:${r==='Final'?'#fbbf24':'var(--text-main)'}">${p.visit}</div>
+              <div class="eq visit">${p.visit}</div>
             </div>`;
           }
           html+=`</div></div>`;
@@ -1826,6 +1830,11 @@ body::before {
 
     function toggleGrupo(g){
       const key="grupo_"+g;
+      sessionStorage.setItem(key,sessionStorage.getItem(key)==="closed"?"open":"closed");
+      renderApp();
+    }
+    function toggleRonda(r){
+      const key="elim_ronda_"+r;
       sessionStorage.setItem(key,sessionStorage.getItem(key)==="closed"?"open":"closed");
       renderApp();
     }
