@@ -1487,10 +1487,12 @@ body::before {
 
       const campeon=document.getElementById("inp-campeon").value;
       const goleador=document.getElementById("inp-goleador").value.trim();
+      const elimPrev=bd.usuarios[USUARIO.key]?bd.usuarios[USUARIO.key].elim_resultados:undefined;
       bd.usuarios[USUARIO.key]={
         nombre:USUARIO.nombre,apellido:USUARIO.apellido,
         fecha:new Date().toLocaleString("es-AR"),resultados,campeon,goleador
       };
+      if(elimPrev) bd.usuarios[USUARIO.key].elim_resultados=elimPrev;
       await guardarBD({["usuarios."+USUARIO.key]: bd.usuarios[USUARIO.key]});
       renderApp();
       setTimeout(()=>descargarPDF(USUARIO.key),500);
@@ -1515,6 +1517,7 @@ body::before {
         resultados[idx]={gl:parseInt(inp.value),gv:parseInt(gv.value)};
       }
       if(!confirm("¿Guardar predicción de eliminatoria? Una vez guardada no se puede modificar."))return;
+      if(!bd.usuarios[USUARIO.key]) bd.usuarios[USUARIO.key]={nombre:USUARIO.nombre,apellido:USUARIO.apellido};
       bd.usuarios[USUARIO.key].elim_resultados=resultados;
       await guardarBD({["usuarios."+USUARIO.key]: bd.usuarios[USUARIO.key]});
       renderApp();
@@ -1751,10 +1754,10 @@ body::before {
       if(!ADMIN_MODE && elimBloqueado){
         html+=`<div class="msg info">Eliminatoria guardada el ${data.fecha}. No se puede modificar.</div>`;
       }
-      if(!ADMIN_MODE && !elimBloqueado && bloqueado){
+      if(!ADMIN_MODE && !elimBloqueado){
         html+=`<div class="msg warn">Completá los resultados de la eliminatoria y guardá al final.</div>`;
       }
-      if(bloqueado || ADMIN_MODE){
+      if(USUARIO){
         const rondas = ["32vos","8vos","4tos","Semi","3er","Final"];
         const labels = {"32vos":"32vos de Final","8vos":"8vos de Final","4tos":"4tos de Final","Semi":"Semifinales","3er":"3er Puesto","Final":"Final"};
         const emojis = {"32vos":"","8vos":"","4tos":"","Semi":"","3er":"🥉","Final":"🏆"};
@@ -1782,12 +1785,12 @@ body::before {
             }else{
               val = {gl:"",gv:""};
             }
-            const editableElim = (bloqueado && !elimBloqueado && !ADMIN_MODE) || (ADMIN_MODE && EDITANDO_KEY) || ADMIN_MODE;
+            const editableElim = (data && !elimBloqueado && !ADMIN_MODE) || (ADMIN_MODE && EDITANDO_KEY) || ADMIN_MODE;
             html+=`<div class="partido${cerradoElim?' cerrado':''}" style="grid-template-columns:1fr auto 1fr">
               ${cerradoElim?`<span class="cerrado-badge">🔒 Cerrado</span>`:''}
               <div class="eq local">${FLAGS[p.local]?`<img src="https://flagcdn.com/w80/${FLAGS[p.local]}.png" class="flag" alt="">`:''}${p.local}</div>
               <div class="score-input">
-                ${editableElim&&!cerradoElim && (bloqueado||ADMIN_MODE)
+                ${editableElim&&!cerradoElim
                   ?`<input type="number" min="0" max="99" class="inp-gl-elim" data-idx="${p.idx}" placeholder="0" value="${val.gl!==''?val.gl:''}" oninput="autofocusNext(this)">
                     <span class="sep">-</span>
                     <input type="number" min="0" max="99" class="inp-gv-elim" data-idx="${p.idx}" placeholder="0" value="${val.gv!==''?val.gv:''}">`
@@ -1813,11 +1816,9 @@ body::before {
           html+=`<div class="acciones"><button onclick="guardarResultadosElimAdmin()">💾 Guardar Resultados Reales Eliminatoria</button></div>`;
         }else if(elimBloqueado){
           html+=`<div class="acciones"><button class="btn-sec" onclick="descargarPDF('${USUARIO.key}')">📄 PDF</button></div>`;
-        }else if(bloqueado && !elimBloqueado){
+        }else if(!elimBloqueado){
           html+=`<div class="acciones"><button onclick="guardarEliminatoria()">💾 Guardar Prediccion Eliminatoria</button></div>`;
         }
-      }else if(!bloqueado){
-        html+=`<div style="text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.9rem">📋 Completá primero la fase de grupos para acceder a la eliminatoria.</div>`;
       }
       html+=`</div>`; // fin tab-elim
 
